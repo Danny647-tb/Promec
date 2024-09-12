@@ -1,0 +1,112 @@
+/* Estilo general del cuerpo */
+/* Estilo general del cuerpo */
+body {
+    background-color: #121212; /* Fondo oscuro para la página */
+    color: #e0e0e0; /* Texto en gris claro */
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Cambiado para alinear al inicio */
+    height: 100vh;
+}
+
+/* Estilo del contenedor del formulario */
+.bg-secondary {
+    background-color: #1e1e1e; /* Fondo ligeramente más claro que el del cuerpo */
+    color: #e0e0e0; /* Texto en gris claro */
+    padding: 2rem; /* Relleno interno ajustado */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7); /* Sombra más pronunciada */
+    width: 100%; /* Ocupa el 100% del contenedor disponible */
+    max-width: 350px; /* Ancho máximo del formulario ajustado */
+    margin: 2rem auto; /* Margen ajustado */
+    text-align: center; /* Centrar texto */
+}
+
+
+/* Estilo del logo */
+.logo {
+    width: 100px; /* Ajusta el tamaño del logo */
+    height: 100px; /* Ajusta la altura del logo para que sea cuadrado */
+    border-radius: 50%; /* Bordes redondeados para hacer el logo circular */
+    margin: 0 auto; /* Centra el logo horizontalmente */
+    display: block; /* Asegura que el margen automático funcione */
+}
+
+/* Estilo del texto en los títulos */
+h3.text-primary {
+    color: #d9534f; /* Rojo para el título principal */
+    font-weight: 600; /* Negrita */
+    font-size: 1.5rem; /* Tamaño de fuente ajustado para los títulos */
+    margin-bottom: 1.5rem; /* Espacio debajo del título */
+}
+
+/* Estilo de los campos del formulario */
+.form-control {
+    background-color: #333; /* Fondo oscuro para los campos de entrada */
+    color: #e0e0e0; /* Texto blanco en los campos de entrada */
+    border: 1px solid #444; /* Borde gris oscuro */
+    border-radius: 8px; /* Bordes redondeados */
+    padding: 0.5rem; /* Relleno interno reducido */
+    font-size: 0.9rem; /* Tamaño de fuente ajustado */
+    height: 2.5rem; /* Altura de los campos reducida */
+    width: calc(100% - 1rem); /* Ancho ajustado para permitir relleno */
+    margin-bottom: 1rem; /* Espacio debajo de cada campo */
+}
+
+/* Estilo de los campos de entrada al enfocar */
+.form-control:focus {
+    border-color: #d9534f; /* Borde rojo al enfocar */
+    box-shadow: 0 0 0 0.3rem rgba(217, 83, 79, 0.3); /* Sombra roja sutil al enfocar */
+    outline: none; /* Elimina el contorno predeterminado */
+}
+
+/* Estilo de las etiquetas de los campos de formulario */
+.form-floating label {
+    color: #bbb; /* Gris claro para las etiquetas */
+    font-size: 1rem; /* Tamaño de fuente ajustado para las etiquetas */
+}
+
+/* Estilo del enlace de "Olvidé mi contraseña" */
+.forgot-password {
+    color: #d9534f; /* Rojo para el enlace */
+    font-size: 0.9rem; /* Tamaño de fuente ajustado */
+    display: block; /* Bloque para separar del botón */
+    margin-top: 1rem; /* Espacio encima del enlace */
+}
+
+.forgot-password:hover {
+    color: #c9302c; /* Rojo más oscuro al pasar el ratón */
+}
+
+/* Estilo del botón de inicio de sesión */
+.btn-primary {
+    background-color: #d9534f; /* Rojo para el fondo del botón */
+    border: none; /* Sin borde para el botón */
+    border-radius: 8px; /* Bordes redondeados */
+    padding: 0.75rem; /* Relleno interno ajustado */
+    font-size: 1.1rem; /* Tamaño de fuente ajustado */
+    height: 2.5rem; /* Altura del botón ajustada */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+}
+
+.btn-primary:hover {
+    background-color: #c9302c; /* Rojo más oscuro al pasar el ratón */
+}
+
+/* Estilo de los checkboxes */
+.form-check-label {
+    color: #e0e0e0; /* Gris claro para la etiqueta del checkbox */
+    font-size: 1rem; /* Tamaño de fuente ajustado */
+}
+
+/* Estilo de la sombra del spinner de carga */
+#spinner .spinner-border {
+    border-color: #d9534f; /* Rojo para la sombra del spinner */
+}
+
+
+
+
