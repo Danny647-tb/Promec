@@ -106,16 +106,13 @@
                     <div class="dropdown-menu bg-transparent border-0">
                         <a href="signin.html" class="dropdown-item">Iniciar Sesión</a>
                         <a href="signup.html" class="dropdown-item">Registrarse</a>
-                        <a href="blank.html" class="dropdown-item">Cerrar Sesión</a>
+                        <a href="index.php" class="dropdown-item">Cerrar Sesión</a>
                     </div>
                 </div>
             </div>
         </nav>
     </div>
     <!-- FIN DE MENU LATERAL -->
-
-
-
 
     <div class="container mt-5">
     <img src="img/Logo2.png" alt="Logo" class="logo">
@@ -255,7 +252,7 @@
         </div>
     </div>
 
-  <!-- Modal para ver historial del cliente -->
+<!-- Modal para ver historial del cliente -->
 <div class="modal fade" id="historialClienteModal" tabindex="-1" aria-labelledby="historialClienteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -264,9 +261,13 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Campo de búsqueda -->
                 <div class="mb-4">
+                <img src="img/Logo2.png" alt="Logo" class="img-logo">
                     <input type="text" id="searchHistorial" class="form-control" placeholder="Buscar en historial" oninput="filtrarHistorial()">
                 </div>
+
+                <!-- Lista de historial -->
                 <h6 class="mt-4">Historial de Cliente</h6>
                 <ul id="listaHistorial" class="list-group">
                     <!-- El historial se llenará dinámicamente -->
@@ -276,6 +277,56 @@
     </div>
 </div>
 
+<!-- Modal para ver detalles del cliente -->
+<div class="modal fade" id="detalleClienteModal" tabindex="-1" aria-labelledby="detalleClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleClienteModalLabel">Detalles del Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            <img src="img/Logo2.png" alt="Logo" class="img-logo">
+
+                <div id="detallesCliente">
+                    <!-- Aquí se mostrarán los detalles del cliente seleccionado -->
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-success" onclick="abrirModalCompra()">Añadir compra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para añadir compra -->
+<div class="modal fade" id="modalCompra" tabindex="-1" aria-labelledby="modalCompraLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCompraLabel">Añadir Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCompra">
+                <img src="img/Logo2.png" alt="Logo" class="img-logo">
+                    <div class="mb-3">
+                        <label for="descripcionCompra" class="form-label">Descripción de la compra</label>
+                        <input type="text" class="form-control" id="descripcionCompra" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="precioCompra" class="form-label">Precio</label>
+                        <input type="number" class="form-control" id="precioCompra" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarCompra()">Guardar Compra</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="mt-5">
         <h3 class="text-danger">Clientes Registrados</h3>
@@ -301,294 +352,9 @@
         </table>
     </div>
 </div>
-
-
-<script>
-let clientes = [];
-
-// Cargar la información al inicio
-document.addEventListener('DOMContentLoaded', function () {
-    cargarGiros();
-    cargarClientes();
-    mostrarCampos(); // Asegurarse de mostrar los campos correctos según el tipo de cliente almacenado
-    agregarEventos();
-});
-
-document.getElementById("clienteForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    let tipoCliente = document.getElementById("tipoCliente").value;
-
-    let cliente = {
-        tipo: tipoCliente === "personaNatural" ? "Persona Natural" : "Empresa",
-        nombre: tipoCliente === "personaNatural" ? document.getElementById("nombrePersona").value : document.getElementById("nombreEmpresa").value,
-        contacto: tipoCliente === "personaNatural" ? document.getElementById("documento").value : document.getElementById("nombreContacto").value,
-        telefono: tipoCliente === "personaNatural" ? document.getElementById("telefonoPersona").value : document.getElementById("telefonoEmpresa").value,
-        email: tipoCliente === "personaNatural" ? document.getElementById("emailPersona").value : document.getElementById("emailEmpresa").value,
-        direccion: tipoCliente === "personaNatural" ? document.getElementById("direccionPersona").value : document.getElementById("direccionEmpresa").value,
-        fechaRegistro: tipoCliente === "personaNatural" ? document.getElementById("fechaRegistroPersona").value : document.getElementById("fechaRegistroEmpresa").value,
-        nit: tipoCliente === "empresa" ? document.getElementById("nitEmpresa").value : undefined,
-        giroNegocio: tipoCliente === "empresa" ? document.getElementById("giroNegocioEmpresa").value : undefined
-    };
-
-    // Verificar si estamos editando o creando un nuevo cliente
-    if (document.getElementById("clienteForm").dataset.editIndex) {
-        clientes[document.getElementById("clienteForm").dataset.editIndex] = cliente;
-    } else {
-        clientes.push(cliente);
-    }
-
-    guardarClientes();
-    mostrarClientes();
-    resetForm();
-});
-
-function mostrarClientes() {
-    let lista = document.getElementById("listaClientes");
-    lista.innerHTML = "";
-    clientes.forEach((cliente, index) => {
-        let nuevaFila = `
-            <tr>
-                <td>${cliente.tipo}</td>
-                <td>${cliente.nombre}</td>
-                <td>${cliente.contacto}</td>
-                <td>${cliente.telefono}</td>
-                <td>${cliente.email}</td>
-                <td>${cliente.direccion}</td>
-                <td>${cliente.nit || ''}</td>
-                <td>${cliente.giroNegocio || ''}</td>
-                <td>${cliente.fechaRegistro}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="editarCliente(${index})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${index})">Eliminar</button>
-                </td>
-            </tr>
-        `;
-        lista.insertAdjacentHTML('beforeend', nuevaFila);
-    });
-}
-
-function editarCliente(index) {
-    let cliente = clientes[index];
-    document.getElementById("tipoCliente").value = cliente.tipo === "Persona Natural" ? "personaNatural" : "empresa";
-    mostrarCampos(); // Mostrar campos correspondientes
-
-    if (cliente.tipo === "Persona Natural") {
-        document.getElementById("nombrePersona").value = cliente.nombre;
-        document.getElementById("documento").value = cliente.contacto;
-        document.getElementById("telefonoPersona").value = cliente.telefono;
-        document.getElementById("emailPersona").value = cliente.email;
-        document.getElementById("direccionPersona").value = cliente.direccion;
-        document.getElementById("fechaRegistroPersona").value = cliente.fechaRegistro;
-    } else {
-        document.getElementById("nombreEmpresa").value = cliente.nombre;
-        document.getElementById("nitEmpresa").value = cliente.nit;
-        document.getElementById("nombreContacto").value = cliente.contacto;
-        document.getElementById("telefonoEmpresa").value = cliente.telefono;
-        document.getElementById("emailEmpresa").value = cliente.email;
-        document.getElementById("direccionEmpresa").value = cliente.direccion;
-        document.getElementById("fechaRegistroEmpresa").value = cliente.fechaRegistro;
-        document.getElementById("giroNegocioEmpresa").value = cliente.giroNegocio;
-    }
-
-    document.getElementById("clienteForm").dataset.editIndex = index; // Guardar índice para edición
-}
-
-function eliminarCliente(index) {
-    if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
-        clientes.splice(index, 1);
-        guardarClientes();
-        mostrarClientes();
-        resetForm();
-    }
-}
-
-function resetForm() {
-    document.getElementById("clienteForm").reset();
-    document.getElementById("camposPersonaNatural").style.display = "none";
-    document.getElementById("camposEmpresa").style.display = "none";
-    delete document.getElementById("clienteForm").dataset.editIndex; // Eliminar índice de edición
-}
-
-function mostrarCampos() {
-    let tipoCliente = document.getElementById("tipoCliente").value;
-    if (tipoCliente === "personaNatural") {
-        document.getElementById("camposPersonaNatural").style.display = "block";
-        document.getElementById("camposEmpresa").style.display = "none";
-    } else if (tipoCliente === "empresa") {
-        document.getElementById("camposPersonaNatural").style.display = "none";
-        document.getElementById("camposEmpresa").style.display = "block";
-        actualizarGirosSelect(); // Actualizar la lista de giros cuando se muestra el formulario de empresa
-    } else {
-        document.getElementById("camposPersonaNatural").style.display = "none";
-        document.getElementById("camposEmpresa").style.display = "none";
-    }
-}
-
-function cargarGiros() {
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-    const listaGiros = document.getElementById("listaGiros");
-    listaGiros.innerHTML = '';
-    giros.forEach((giro) => {
-        const listItem = document.createElement('li');
-        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-        listItem.innerHTML = `
-            ${giro} 
-            <button class="btn btn-danger btn-sm ms-3" onclick="eliminarGiro('${giro}')">Eliminar</button>
-        `;
-        listaGiros.appendChild(listItem);
-    });
-    actualizarGirosSelect();
-}
-
-function actualizarGirosSelect() {
-    const giroNegocioSelect = document.getElementById("giroNegocioEmpresa");
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-    giroNegocioSelect.innerHTML = '<option value="">Seleccione un giro de negocio</option>';
-    giros.forEach(giro => {
-        let option = document.createElement('option');
-        option.value = giro;
-        option.textContent = giro;
-        giroNegocioSelect.appendChild(option);
-    });
-}
-
-document.getElementById("nuevoGiroForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    let nuevoGiro = document.getElementById("nuevoGiro").value.trim();
-    if (!nuevoGiro) return;
-
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-
-    if (!giros.includes(nuevoGiro)) {
-        giros.push(nuevoGiro);
-        localStorage.setItem("girosNegocio", JSON.stringify(giros));
-        cargarGiros();
-        resetForm();
-        let modal = bootstrap.Modal.getInstance(document.getElementById('gestionarGiroModal'));
-        modal.hide();
-    } else {
-        alert("Este giro ya está registrado.");
-    }
-});
-
-function eliminarGiro(giroNombre) {
-    if (confirm("¿Estás seguro de que quieres eliminar este giro de negocio?")) {
-        let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-        giros = giros.filter(giro => giro !== giroNombre);
-        localStorage.setItem("girosNegocio", JSON.stringify(giros));
-        cargarGiros();
-    }
-}
-
-function guardarClientes() {
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-}
-
-function cargarClientes() {
-    clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    mostrarClientes();
-}
-
-function agregarEventos() {
-    document.getElementById("searchBar").addEventListener("input", function () {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll("#listaClientes tr");
-        rows.forEach(row => {
-            const nombre = row.cells[1].textContent.toLowerCase();
-            const empresa = row.cells[2].textContent.toLowerCase();
-            if (nombre.includes(searchTerm) || empresa.includes(searchTerm)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        });
-    });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function mostrarHistorial() {
-    const listaHistorial = document.getElementById("listaHistorial");
-    listaHistorial.innerHTML = ""; // Limpiar la lista antes de llenarla
-
-    clientes.forEach((cliente, index) => {
-        let historialItem = `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${cliente.tipo}:</strong> ${cliente.nombre} - ${cliente.contacto}
-                </div>
-                <button class="btn btn-info btn-sm" onclick="verDetalles(${index})">Ver Detalles</button>
-            </li>
-        `;
-        listaHistorial.insertAdjacentHTML('beforeend', historialItem);
-    });
-}
-
-function verDetalles(index) {
-    let cliente = clientes[index];
-    alert(`Detalles del Cliente:\n
-        Tipo: ${cliente.tipo}\n
-        Nombre: ${cliente.nombre}\n
-        Contacto: ${cliente.contacto}\n
-        Teléfono: ${cliente.telefono}\n
-        Email: ${cliente.email}\n
-        Dirección: ${cliente.direccion}\n
-        NIT: ${cliente.nit || 'N/A'}\n
-        Giro de Negocio: ${cliente.giroNegocio || 'N/A'}\n
-        Fecha de Registro: ${cliente.fechaRegistro}
-    `);
-}
-document.getElementById('historialClienteModal').addEventListener('show.bs.modal', function () {
-    mostrarHistorial();
-});
-function filtrarHistorial() {
-    const searchTerm = document.getElementById('searchHistorial').value.toLowerCase();
-    const historialItems = document.querySelectorAll("#listaHistorial .list-group-item");
-    
-    historialItems.forEach(item => {
-        const texto = item.textContent.toLowerCase();
-        if (texto.includes(searchTerm)) {
-            item.style.display = "";
-        } else {
-            item.style.display = "none";
-        }
-    });
-}
-function filtrarHistorial() {
-    const searchTerm = document.getElementById('searchHistorial').value.toLowerCase();
-    const listaHistorial = document.getElementById('listaHistorial');
-    const historialItems = listaHistorial.querySelectorAll('.list-group-item');
-
-    historialItems.forEach(item => {
-        const nombre = item.querySelector('div').textContent.toLowerCase();
-        if (nombre.includes(searchTerm)) {
-            item.style.display = "";
-        } else {
-            item.style.display = "none";
-        }
-    });
-}
-
-</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="JS/cliente.js"></script>
 </body>
 
 </html>

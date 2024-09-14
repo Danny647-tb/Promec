@@ -357,6 +357,36 @@
         }
 
     </script>
+
+<script>
+
+//MENU DE PROVEEDORES 
+
+document.addEventListener("DOMContentLoaded", function () {
+cargarProveedoresEnMenu();
+});
+
+function cargarProveedoresEnMenu() {
+// Obtener el select del menú donde se agregarán los proveedores
+let proveedorSelect = document.getElementById("proveedor");
+
+// Limpiar las opciones actuales (mantiene la opción predeterminada)
+proveedorSelect.innerHTML = '<option value="">Seleccione un proveedor</option>';
+
+// Obtener los proveedores almacenados en el localStorage
+let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+
+// Agregar los proveedores como opciones en el select
+proveedores.forEach(proveedor => {
+let option = document.createElement("option");
+option.value = proveedor.nombreProveedor; // El valor será el nombre del proveedor
+option.textContent = proveedor.nombreProveedor; // El texto que se muestra será el nombre del proveedor
+proveedorSelect.appendChild(option);
+});
+}
+
+</script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

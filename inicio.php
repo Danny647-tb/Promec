@@ -296,8 +296,14 @@
                 <a href="cotizacion.php" class="nav-item nav-link"><i class="fa fa-table me-2"></i>Cotización</a>
                 <a href="facturacion.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Facturación</a>
                 <a href="produccion.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Producción</a>
-                <a href="reporte.php" class="nav-item nav-link"><i class="fa fa-file-alt me-2"></i>Reportes</a>
-                <a href="clientes.php" class="nav-item nav-link"><i class="fa fa-keyboard me-2"></i>Clientes</a>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-file-alt me-2"></i>Configuración</a>
+                    <div class="dropdown-menu bg-transparent border-0">
+                        <a href="Login/signin.php" class="dropdown-item">Iniciar Sesión</a>
+                        <a href="Login/signup.php" class="dropdown-item">Registrarse</a>
+                        <a href="index.php" class="dropdown-item">Cerrar Sesión</a>
+                    </div>
+                </div>
             </div>
         </nav>
     </div>
