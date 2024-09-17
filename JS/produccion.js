@@ -1,355 +1,426 @@
-let clientes = [];
+    function filtrarHistorial() {
+        const modalBody = document.getElementById('modalBody');
+        const searchValue = document.getElementById('searchHistorial').value.toLowerCase();
+        const listaHistorial = document.getElementById('listaHistorial');
 
-// Cargar la información al inicio
-document.addEventListener('DOMContentLoaded', function () {
-    cargarGiros();
-    cargarClientes();
-    mostrarCampos(); // Asegurarse de mostrar los campos correctos según el tipo de cliente almacenado
-    agregarEventos();
-});
+        // Limpiar la lista antes de agregar nuevos elementos
+        listaHistorial.innerHTML = '';
 
-document.getElementById("clienteForm").addEventListener("submit", function (e) {
+        let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+
+        if (clientes.length === 0) {
+            listaHistorial.innerHTML = '<li class="list-group-item">No hay datos disponibles.</li>';
+            return;
+        }
+
+        // Filtrar clientes basado en el valor del input
+        const filtrados = clientes.filter(cliente =>
+            cliente.nombre.toLowerCase().includes(searchValue) ||
+            cliente.email.toLowerCase().includes(searchValue) ||
+            cliente.telefono.toLowerCase().includes(searchValue)
+        );
+
+        if (filtrados.length === 0) {
+            listaHistorial.innerHTML = '<li class="list-group-item">No se encontraron resultados.</li>';
+        } else {
+            filtrados.forEach(cliente => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `
+                <strong>Nombre:</strong> ${cliente.nombre} <br>
+                <strong>Tipo:</strong> ${cliente.tipo} <br>
+                <strong>Contacto:</strong> ${cliente.contacto} <br>
+                <strong>Teléfono:</strong> ${cliente.telefono} <br>
+                <strong>Email:</strong> ${cliente.email} <br>
+                <strong>Dirección:</strong> ${cliente.direccion} <br>
+                <strong>NIT:</strong> ${cliente.nit || 'No disponible'} <br>
+                <strong>Giro Negocio:</strong> ${cliente.giroNegocio || 'No disponible'} <br>
+                <strong>Fecha Registro:</strong> ${cliente.fechaRegistro}
+                <button class="btn btn-primary btn-sm mt-2" onclick="copiarNombre('${cliente.nombre}')">Seleccionar</button>
+            `;
+                listaHistorial.appendChild(li);
+            });
+        }
+    }
+
+    function copiarNombre(nombre) {
+        const nombreInput = document.getElementById('nombreCliente'); // Cambia por el ID del input donde quieras pegar el nombre
+        nombreInput.value = nombre;
+
+        // Opcional: Cerrar el modal después de seleccionar el cliente
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historialClienteModal'));
+        modal.hide();
+    }
+
+        // Capturar los datos del formulario
+        const orden = {
+            nombreCliente: document.getElementById('nombreCliente').value,
+            descripcionProducto: document.getElementById('descripcionProducto').value,
+            encargadoProduccion: document.getElementById('encargadoProduccion').value,
+            estadoOrden: document.getElementById('estadoOrden').value,
+            fechaCreacion: document.getElementById('fechaCreacion').value,
+            fechaEntrega: document.getElementById('fechaEntrega').value,
+            cantidad: document.getElementById('cantidad').value,
+            valorTotal: document.getElementById('valorTotal').value
+        };
+
+
+
+    let editIndex = null;
+
+    // Cargar las órdenes y productos desde Local Storage al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    cargarDesdeLocalStorage();
+    document.getElementById('ordenProduccionForm').addEventListener('submit', handleFormSubmit);
+    document.getElementById('buscar').addEventListener('input', handleSearch);
+    });
+
+    // Manejar el envío del formulario de orden de producción
+    function handleFormSubmit(e) {
     e.preventDefault();
+    const form = e.target;
 
-    let tipoCliente = document.getElementById("tipoCliente").value;
+    const nombreCliente = form.nombreCliente.value.trim();
+    const descripcionProducto = form.descripcionProducto.value.trim();
+    const encargadoProduccion = form.encargadoProduccion.value.trim();
+    const estadoOrden = form.estadoOrden.value;
+    const fechaCreacion = form.fechaCreacion.value;
+    const fechaEntrega = form.fechaEntrega.value;
+    const cantidad = form.cantidad.value;
+    const valorTotal = form.valorTotal.value;
 
-    let cliente = {
-        tipo: tipoCliente === "personaNatural" ? "Persona Natural" : "Empresa",
-        nombre: tipoCliente === "personaNatural" ? document.getElementById("nombrePersona").value : document.getElementById("nombreEmpresa").value,
-        contacto: tipoCliente === "personaNatural" ? document.getElementById("documento").value : document.getElementById("nombreContacto").value,
-        telefono: tipoCliente === "personaNatural" ? document.getElementById("telefonoPersona").value : document.getElementById("telefonoEmpresa").value,
-        email: tipoCliente === "personaNatural" ? document.getElementById("emailPersona").value : document.getElementById("emailEmpresa").value,
-        direccion: tipoCliente === "personaNatural" ? document.getElementById("direccionPersona").value : document.getElementById("direccionEmpresa").value,
-        fechaRegistro: tipoCliente === "personaNatural" ? document.getElementById("fechaRegistroPersona").value : document.getElementById("fechaRegistroEmpresa").value,
-        nit: tipoCliente === "empresa" ? document.getElementById("nitEmpresa").value : undefined,
-        giroNegocio: tipoCliente === "empresa" ? document.getElementById("giroNegocioEmpresa").value : undefined
+    // Verificar si hay campos vacíos
+    if (!nombreCliente || !descripcionProducto || !encargadoProduccion || !estadoOrden || !fechaCreacion || !fechaEntrega || !cantidad || !valorTotal) {
+        alert('Por favor, complete todos los campos.');
+        return;
+    }
+
+    const order = {
+        nombreCliente,
+        descripcionProducto,
+        encargadoProduccion,
+        estadoOrden,
+        fechaCreacion,
+        fechaEntrega,
+        cantidad,
+        valorTotal,
     };
 
-    // Verificar si estamos editando o creando un nuevo cliente
-    if (document.getElementById("clienteForm").dataset.editIndex) {
-        clientes[document.getElementById("clienteForm").dataset.editIndex] = cliente;
+    if (editIndex !== null) {
+        // Editar orden existente
+        updateOrder(editIndex, order);
     } else {
-        clientes.push(cliente);
+        // Añadir nueva orden
+        addOrder(order);
     }
 
-    guardarClientes();
-    mostrarClientes();
-    resetForm();
-});
-
-function mostrarClientes() {
-    let lista = document.getElementById("listaClientes");
-    lista.innerHTML = "";
-    clientes.forEach((cliente, index) => {
-        let nuevaFila = `
-            <tr>
-                <td>${cliente.tipo}</td>
-                <td>${cliente.nombre}</td>
-                <td>${cliente.contacto}</td>
-                <td>${cliente.telefono}</td>
-                <td>${cliente.email}</td>
-                <td>${cliente.direccion}</td>
-                <td>${cliente.nit || ''}</td>
-                <td>${cliente.giroNegocio || ''}</td>
-                <td>${cliente.fechaRegistro}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="editarCliente(${index})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${index})">Eliminar</button>
-                </td>
-            </tr>
-        `;
-        lista.insertAdjacentHTML('beforeend', nuevaFila);
-    });
-}
-
-function editarCliente(index) {
-    let cliente = clientes[index];
-    document.getElementById("tipoCliente").value = cliente.tipo === "Persona Natural" ? "personaNatural" : "empresa";
-    mostrarCampos(); // Mostrar campos correspondientes
-
-    if (cliente.tipo === "Persona Natural") {
-        document.getElementById("nombrePersona").value = cliente.nombre;
-        document.getElementById("documento").value = cliente.contacto;
-        document.getElementById("telefonoPersona").value = cliente.telefono;
-        document.getElementById("emailPersona").value = cliente.email;
-        document.getElementById("direccionPersona").value = cliente.direccion;
-        document.getElementById("fechaRegistroPersona").value = cliente.fechaRegistro;
-    } else {
-        document.getElementById("nombreEmpresa").value = cliente.nombre;
-        document.getElementById("nitEmpresa").value = cliente.nit;
-        document.getElementById("nombreContacto").value = cliente.contacto;
-        document.getElementById("telefonoEmpresa").value = cliente.telefono;
-        document.getElementById("emailEmpresa").value = cliente.email;
-        document.getElementById("direccionEmpresa").value = cliente.direccion;
-        document.getElementById("fechaRegistroEmpresa").value = cliente.fechaRegistro;
-        document.getElementById("giroNegocioEmpresa").value = cliente.giroNegocio;
+    form.reset();
+    editIndex = null;
+    saveOrders(); // Guardar órdenes en Local Storage
     }
 
-    document.getElementById("clienteForm").dataset.editIndex = index; // Guardar índice para edición
-}
+    // Añadir una nueva orden a la tabla
+    function addOrder(order) {
+    const tbody = document.getElementById('listaOrdenes');
+    const row = document.createElement('tr');
 
-function eliminarCliente(index) {
-    if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
-        clientes.splice(index, 1);
-        guardarClientes();
-        mostrarClientes();
-        resetForm();
-    }
-}
+    const estado = obtenerAlertaEstado(order.estadoOrden);
 
-function resetForm() {
-    document.getElementById("clienteForm").reset();
-    document.getElementById("camposPersonaNatural").style.display = "none";
-    document.getElementById("camposEmpresa").style.display = "none";
-    delete document.getElementById("clienteForm").dataset.editIndex; // Eliminar índice de edición
-}
-
-function mostrarCampos() {
-    let tipoCliente = document.getElementById("tipoCliente").value;
-    if (tipoCliente === "personaNatural") {
-        document.getElementById("camposPersonaNatural").style.display = "block";
-        document.getElementById("camposEmpresa").style.display = "none";
-    } else if (tipoCliente === "empresa") {
-        document.getElementById("camposPersonaNatural").style.display = "none";
-        document.getElementById("camposEmpresa").style.display = "block";
-        actualizarGirosSelect(); // Actualizar la lista de giros cuando se muestra el formulario de empresa
-    } else {
-        document.getElementById("camposPersonaNatural").style.display = "none";
-        document.getElementById("camposEmpresa").style.display = "none";
-    }
-}
-
-function cargarGiros() {
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-    const listaGiros = document.getElementById("listaGiros");
-    listaGiros.innerHTML = '';
-    giros.forEach((giro) => {
-        const listItem = document.createElement('li');
-        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-        listItem.innerHTML = `
-            ${giro} 
-            <button class="btn btn-danger btn-sm ms-3" onclick="eliminarGiro('${giro}')">Eliminar</button>
-        `;
-        listaGiros.appendChild(listItem);
-    });
-    actualizarGirosSelect();
-}
-
-function actualizarGirosSelect() {
-    const giroNegocioSelect = document.getElementById("giroNegocioEmpresa");
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-    giroNegocioSelect.innerHTML = '<option value="">Seleccione un giro de negocio</option>';
-    giros.forEach(giro => {
-        let option = document.createElement('option');
-        option.value = giro;
-        option.textContent = giro;
-        giroNegocioSelect.appendChild(option);
-    });
-}
-
-document.getElementById("nuevoGiroForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    let nuevoGiro = document.getElementById("nuevoGiro").value.trim();
-    if (!nuevoGiro) return;
-
-    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-
-    if (!giros.includes(nuevoGiro)) {
-        giros.push(nuevoGiro);
-        localStorage.setItem("girosNegocio", JSON.stringify(giros));
-        cargarGiros();
-        resetForm();
-        let modal = bootstrap.Modal.getInstance(document.getElementById('gestionarGiroModal'));
-        modal.hide();
-    } else {
-        alert("Este giro ya está registrado.");
-    }
-});
-
-function eliminarGiro(giroNombre) {
-    if (confirm("¿Estás seguro de que quieres eliminar este giro de negocio?")) {
-        let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-        giros = giros.filter(giro => giro !== giroNombre);
-        localStorage.setItem("girosNegocio", JSON.stringify(giros));
-        cargarGiros();
-    }
-}
-
-function guardarClientes() {
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-}
-
-function cargarClientes() {
-    clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-    mostrarClientes();
-}
-
-function agregarEventos() {
-    document.getElementById("searchBar").addEventListener("input", function () {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll("#listaClientes tr");
-        rows.forEach(row => {
-            const nombre = row.cells[1].textContent.toLowerCase();
-            const empresa = row.cells[2].textContent.toLowerCase();
-            if (nombre.includes(searchTerm) || empresa.includes(searchTerm)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        });
-    });
-}
-
-
-
-// Mostrar historial de clientes
-function cargarHistorialClientes() {
-    let listaHistorial = document.getElementById("listaHistorial");
-    listaHistorial.innerHTML = ""; // Limpiar la lista antes de llenarla
-
-    // Si no hay clientes, mostrar un mensaje
-    if (clientes.length === 0) {
-        listaHistorial.innerHTML = `<li class="list-group-item">No hay clientes registrados.</li>`;
-        return;
-    }
-
-    // Mostrar todos los clientes en el historial
-    clientes.forEach((cliente, index) => {
-        let listItem = document.createElement("li");
-        listItem.className = "list-group-item d-flex justify-content-between align-items-center";
-        listItem.innerHTML = `
-            ${cliente.nombre}
-            <button class="btn btn-sm btn-primary" onclick="verDetalles(${index})">Ver detalles</button>
-        `;
-        listaHistorial.appendChild(listItem);
-    });
-}
-
-// Filtrar historial por nombre
-function filtrarHistorial() {
-    let input = document.getElementById("searchHistorial").value.toLowerCase();
-    let listaHistorial = document.getElementById("listaHistorial");
-    listaHistorial.innerHTML = ""; // Limpiar el historial antes de llenarlo
-
-    let clientesFiltrados = clientes.filter(cliente => cliente.nombre.toLowerCase().includes(input));
-
-    // Si no hay clientes que coincidan con la búsqueda, mostrar mensaje
-    if (clientesFiltrados.length === 0) {
-        listaHistorial.innerHTML = `<li class="list-group-item">No se encontraron clientes.</li>`;
-        return;
-    }
-
-    clientesFiltrados.forEach((cliente, index) => {
-        let listItem = document.createElement("li");
-        listItem.className = "list-group-item d-flex justify-content-between align-items-center";
-        listItem.innerHTML = `
-            ${cliente.nombre}
-            <button class="btn btn-sm btn-primary" onclick="verDetalles(${index})">Ver detalles</button>
-        `;
-        listaHistorial.appendChild(listItem);
-    });
-}
-
-// Mostrar detalles del cliente en el modal
-function verDetalles(index) {
-    let cliente = clientes[index];
-    let detallesDiv = document.getElementById("detallesCliente");
-
-    detallesDiv.innerHTML = `
-        <p><strong>Tipo de Cliente:</strong> ${cliente.tipo}</p>
-        <p><strong>Nombre:</strong> ${cliente.nombre}</p>
-        <p><strong>Teléfono:</strong> ${cliente.telefono}</p>
-        <p><strong>Email:</strong> ${cliente.email}</p>
-        <p><strong>Dirección:</strong> ${cliente.direccion}</p>
-        <p><strong>NIT:</strong> ${cliente.nit || "-"}</p>
-        <p><strong>Giro de Negocio:</strong> ${cliente.giroNegocio || "-"}</p>
-        <p><strong>Fecha de Registro:</strong> ${cliente.fechaRegistro}</p>
+    row.innerHTML = `
+        <td>${order.nombreCliente}</td>
+        <td>${order.descripcionProducto}</td>
+        <td>${order.encargadoProduccion}</td>
+        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
+        <td>${order.fechaCreacion}</td>
+        <td>${order.fechaEntrega}</td>
+        <td>${order.cantidad}</td>
+        <td>${order.valorTotal}</td>
+        <td>
+            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
+        </td>
     `;
 
-    // Mostrar el modal de detalles
-    let detalleClienteModal = new bootstrap.Modal(document.getElementById('detalleClienteModal'));
-    detalleClienteModal.show();
-}
-
-// Cargar el historial cuando la página cargue
-document.addEventListener("DOMContentLoaded", cargarHistorialClientes);
-
-
-//COMPRAS DEL CLIENTE 
-
-let clienteSeleccionadoIndex = -1;
-
-// Función para abrir el modal de compras
-function abrirModalCompra() {
-    // Abrir el modal de añadir compra
-    let modalCompra = new bootstrap.Modal(document.getElementById('modalCompra'));
-    modalCompra.show();
-}
-
-// Función para guardar la compra
-function guardarCompra() {
-    let descripcion = document.getElementById("descripcionCompra").value;
-    let precio = document.getElementById("precioCompra").value;
-
-    if (descripcion === "" || precio === "") {
-        alert("Por favor, complete todos los campos.");
-        return;
+    tbody.appendChild(row);
     }
 
-    // Añadir la compra al cliente seleccionado
-    let cliente = clientes[clienteSeleccionadoIndex];
-    if (!cliente.compras) {
-        cliente.compras = [];
+    // Editar una orden existente
+    function editOrder(button) {
+    const row = button.closest('tr');
+    const cells = row.getElementsByTagName('td');
+
+    document.getElementById('nombreCliente').value = cells[0].innerText;
+    document.getElementById('descripcionProducto').value = cells[1].innerText;
+    document.getElementById('encargadoProduccion').value = cells[2].innerText;
+    document.getElementById('estadoOrden').value = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
+    document.getElementById('fechaCreacion').value = cells[4].innerText;
+    document.getElementById('fechaEntrega').value = cells[5].innerText;
+    document.getElementById('cantidad').value = cells[6].innerText;
+    document.getElementById('valorTotal').value = cells[7].innerText;
+
+    editIndex = Array.from(row.parentNode.children).indexOf(row);
     }
 
-    cliente.compras.push({
-        descripcion: descripcion,
-        precio: parseFloat(precio)
+    // Obtener el estado de la orden desde el texto del badge
+    function obtenerEstadoOrdenDesdeBadge(textoBadge) {
+    switch (textoBadge) {
+        case 'Pendiente':
+            return 'pendiente';
+        case 'En Proceso':
+            return 'en_proceso';
+        case 'Completada':
+            return 'completada';
+        case 'Cancelada':
+            return 'cancelada';
+        default:
+            return 'desconocido';
+    }
+    }
+
+    // Actualizar una orden existente
+    function updateOrder(index, order) {
+    const tbody = document.getElementById('listaOrdenes');
+    const row = tbody.children[index];
+
+    const estado = obtenerAlertaEstado(order.estadoOrden);
+
+    row.innerHTML = `
+        <td>${order.nombreCliente}</td>
+        <td>${order.descripcionProducto}</td>
+        <td>${order.encargadoProduccion}</td>
+        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
+        <td>${order.fechaCreacion}</td>
+        <td>${order.fechaEntrega}</td>
+        <td>${order.cantidad}</td>
+        <td>${order.valorTotal}</td>
+        <td>
+            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
+        </td>
+    `;
+    saveOrders(); // Guardar órdenes en Local Storage
+    }
+
+    // Eliminar una orden
+    function deleteOrder(button) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta orden?')) {
+        const row = button.closest('tr');
+        row.remove();
+        saveOrders(); // Guardar órdenes en Local Storage
+    }
+    }
+
+    // Manejar la búsqueda de órdenes
+    function handleSearch(e) {
+    const query = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#listaOrdenes tr');
+
+    rows.forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        const text = Array.from(cells).map(cell => cell.innerText.toLowerCase()).join(' ');
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+    }
+
+    // Obtener la clase y texto para el estado de la orden
+    function obtenerAlertaEstado(estado) {
+    switch (estado) {
+        case 'pendiente':
+            return { clase: "bg-warning text-dark", texto: "Pendiente" };  // Amarillo
+        case 'en_proceso':
+            return { clase: "bg-info text-dark", texto: "En Proceso" };  // Azul Claro
+        case 'completada':
+            return { clase: "bg-success text-white", texto: "Completada" };  // Verde
+        case 'cancelada':
+            return { clase: "bg-danger text-white", texto: "Cancelada" };  // Rojo
+        default:
+            return { clase: "bg-secondary text-white", texto: "Desconocido" };  // Gris
+    }
+    }
+
+    // Guardar las órdenes en Local Storage
+    function saveOrders() {
+    const orders = [];
+    document.querySelectorAll('#listaOrdenes tr').forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        const estado = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
+        const order = {
+            nombreCliente: cells[0].innerText,
+            descripcionProducto: cells[1].innerText,
+            encargadoProduccion: cells[2].innerText,
+            estadoOrden: estado,
+            fechaCreacion: cells[4].innerText,
+            fechaEntrega: cells[5].innerText,
+            cantidad: cells[6].innerText,
+            valorTotal: cells[7].innerText
+        };
+        orders.push(order);
+    });
+    localStorage.setItem('orders', JSON.stringify(orders));
+    }
+
+    // Cargar las órdenes desde Local Storage
+    function loadOrders() {
+    const orders = JSON.parse(localStorage.getItem('orders')) || [];
+    orders.forEach(order => addOrder(order));
+    }
+
+    // Simula una base de datos de productos
+    let productos = [];
+
+    // Cargar productos en el select del modal
+    function cargarProductos() {
+    let select = document.getElementById("nombreProductoStock");
+    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
+
+    productos.forEach(producto => {
+        let option = document.createElement("option");
+        option.value = producto.nombreProducto;
+        option.textContent = producto.nombreProducto;
+        select.appendChild(option);
+    });
+    }
+
+    // Actualizar cantidad actual cuando se selecciona un producto
+    function actualizarCantidadActual() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        document.getElementById("cantidadActual").value = producto.cantidadInicial;
+    } else {
+        document.getElementById("cantidadActual").value = "";
+    }
+    }
+
+    // Función para agregar stock
+    function agregarStock() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
+    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
+
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        if (cantidadAgregar > 0) {
+            producto.cantidadInicial -= cantidadAgregar;
+            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
+            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
+            
+            // Actualizar el cuadro de cantidad en el formulario principal
+            let cantidadInput = document.getElementById("cantidad");
+            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
+            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
+
+            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
+            guardarEnLocalStorage();
+            alert("Stock descontado correctamente.");
+            document.getElementById("agregarStockForm").reset();
+            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
+        } else {
+            alert("La cantidad a descontar debe ser mayor a cero.");
+        }
+    } else {
+        alert("Producto no encontrado.");
+    }
+    }
+
+    // Guardar en Local Storage
+    function guardarEnLocalStorage() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+    }
+
+    // Cargar productos desde Local Storage al cargar la página
+    function cargarDesdeLocalStorage() {
+    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
+    if (productosGuardados) {
+        productos = productosGuardados;
+        cargarProductos();
+    }
+    }
+
+
+    //ESTO ES LO DE LA CANTIDA Y EL STOCK, LAS FUNCIONES DEL RESTO DEL PROYETO VA A ARRIBA
+
+    // Cargar productos en el select del modal
+    function cargarProductos() {
+    let select = document.getElementById("nombreProductoStock");
+    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
+
+    productos.forEach(producto => {
+        let option = document.createElement("option");
+        option.value = producto.nombreProducto;
+        option.textContent = producto.nombreProducto;
+        select.appendChild(option);
+    });
+    }
+
+    // Actualizar cantidad actual cuando se selecciona un producto
+    function actualizarCantidadActual() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        document.getElementById("cantidadActual").value = producto.cantidadInicial;
+    } else {
+        document.getElementById("cantidadActual").value = "";
+    }
+    }
+
+    // Función para agregar stock
+    function agregarStock() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
+    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
+
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        if (cantidadAgregar > 0) {
+            producto.cantidadInicial -= cantidadAgregar;
+            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
+            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
+            
+            // Actualizar el cuadro de cantidad en el formulario principal
+            let cantidadInput = document.getElementById("cantidad");
+            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
+            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
+
+            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
+            guardarEnLocalStorage();
+            alert("Stock descontado correctamente.");
+            document.getElementById("agregarStockForm").reset();
+            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
+        } else {
+            alert("La cantidad a descontar debe ser mayor a cero.");
+        }
+    } else {
+        alert("Producto no encontrado.");
+    }
+    }
+
+    // Guardar en LocalStorage
+    function guardarEnLocalStorage() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+    }
+
+    // Cargar productos desde LocalStorage al cargar la página
+    function cargarDesdeLocalStorage() {
+    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
+    if (productosGuardados) {
+        productos = productosGuardados;
+        cargarProductos();
+    }
+    }
+
+    // Inicializar
+    document.addEventListener("DOMContentLoaded", function () {
+    cargarDesdeLocalStorage();
     });
 
-    // Guardar en el localStorage
-    localStorage.setItem("clientes", JSON.stringify(clientes));
 
-    // Limpiar el formulario
-    document.getElementById("formCompra").reset();
 
-    // Cerrar el modal de compra
-    let modalCompra = bootstrap.Modal.getInstance(document.getElementById('modalCompra'));
-    modalCompra.hide();
 
-    alert("Compra añadida con éxito.");
-}
 
-// Función para mostrar los detalles del cliente y abrir el modal de detalles
-function verDetalles(index) {
-    clienteSeleccionadoIndex = index; // Guardar el índice del cliente seleccionado
-    let cliente = clientes[index];
-    let detallesDiv = document.getElementById("detallesCliente");
 
-    let comprasHtml = '';
-    if (cliente.compras && cliente.compras.length > 0) {
-        comprasHtml = '<h6>Compras realizadas:</h6><ul>';
-        cliente.compras.forEach((compra, i) => {
-            comprasHtml += `<li>${compra.descripcion} - $${compra.precio.toFixed(2)}</li>`;
-        });
-        comprasHtml += '</ul>';
-    } else {
-        comprasHtml = '<p>No ha realizado ninguna compra aún.</p>';
-    }
 
-    detallesDiv.innerHTML = `
-        <p><strong>Tipo de Cliente:</strong> ${cliente.tipo}</p>
-        <p><strong>Nombre:</strong> ${cliente.nombre}</p>
-        <p><strong>Teléfono:</strong> ${cliente.telefono}</p>
-        <p><strong>Email:</strong> ${cliente.email}</p>
-        <p><strong>Dirección:</strong> ${cliente.direccion}</p>
-        <p><strong>NIT:</strong> ${cliente.nit || "-"}</p>
-        <p><strong>Giro de Negocio:</strong> ${cliente.giroNegocio || "-"}</p>
-        <p><strong>Fecha de Registro:</strong> ${cliente.fechaRegistro}</p>
-        ${comprasHtml}
-    `;
 
-    // Abrir el modal de detalles
-    let detalleClienteModal = new bootstrap.Modal(document.getElementById('detalleClienteModal'));
-    detalleClienteModal.show();
-}
+
+

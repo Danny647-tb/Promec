@@ -135,6 +135,8 @@
                 <a href="cotizacion.php" class="nav-item nav-link"><i class="fa fa-table me-2"></i>Cotización</a>
                 <a href="facturacion.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Facturación</a>
                 <a href="produccion.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Producción</a>
+                <a href="papelera.php" class="nav-item nav-link"><i class="fa fa-trash-alt me-2"></i>Archivados</a>
+
                 <div class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-file-alt me-2"></i>Configuración</a>
                     <div class="dropdown-menu bg-transparent border-0">
@@ -167,15 +169,17 @@
     <form id="ordenProduccionForm" class="form-container">
 
     <div class="form-group">
-    <label for="nombreCliente" class="form-label text-danger">Nombre del Cliente</label>
-    <div class="input-group">
-        <input type="text" class="form-control" id="nombreCliente" placeholder="Seleccionar cliente..." required>
-       <!-- Botón que abre el modal y carga los datos -->
-    <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#historialClienteModal" onclick="cargarDatosModal()">
-    Ver Historial
-    </button>
-    </div>
-</div>
+            <label for="nombreCliente" class="form-label text-danger">Nombre del Cliente</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="nombreCliente" placeholder="Seleccionar cliente..."
+                       required>
+                <!-- Botón que abre el modal y carga los datos -->
+                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal"
+                        data-bs-target="#historialClienteModal">
+                    Ver Historial
+                </button>
+            </div>
+        </div>
 
 
 
@@ -184,10 +188,12 @@
             <textarea class="form-control" id="descripcionProducto" rows="3" required></textarea>
         </div>
 
+        
         <div class="form-group">
             <label for="encargadoProduccion" class="form-label">Encargado de la Producción</label>
             <input type="text" class="form-control" id="encargadoProduccion" required>
         </div>
+
 
         <div class="form-group">
             <label for="estadoOrden" class="form-label">Estado de la Orden</label>
@@ -297,7 +303,8 @@
 
 
 <!-- Modal para ver historial del cliente -->
-<div class="modal fade" id="historialClienteModal" tabindex="-1" aria-labelledby="historialClienteModalLabel" aria-hidden="true">
+<div class="modal fade" id="historialClienteModal" tabindex="-1" aria-labelledby="historialClienteModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -307,8 +314,9 @@
             <div class="modal-body">
                 <!-- Campo de búsqueda -->
                 <div class="mb-4">
-                <img src="img/Logo2.png" alt="Logo" class="img-logo">
-                    <input type="text" id="searchHistorial" class="form-control" placeholder="Buscar en historial" oninput="filtrarHistorial()">
+                    <img src="img/Logo2.png" alt="Logo" class="img-logo">
+                    <input type="text" id="searchHistorial" class="form-control" placeholder="Buscar en historial"
+                           oninput="filtrarHistorial()">
                 </div>
 
                 <!-- Lista de historial -->
@@ -316,6 +324,9 @@
                 <ul id="listaHistorial" class="list-group">
                     <!-- El historial se llenará dinámicamente -->
                 </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -344,396 +355,7 @@
 </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<script>
-let editIndex = null;
-
-// Cargar las órdenes y productos desde Local Storage al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    loadOrders();
-    cargarDesdeLocalStorage();
-    document.getElementById('ordenProduccionForm').addEventListener('submit', handleFormSubmit);
-    document.getElementById('buscar').addEventListener('input', handleSearch);
-});
-
-// Manejar el envío del formulario de orden de producción
-function handleFormSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-
-    const nombreCliente = form.nombreCliente.value.trim();
-    const descripcionProducto = form.descripcionProducto.value.trim();
-    const encargadoProduccion = form.encargadoProduccion.value.trim();
-    const estadoOrden = form.estadoOrden.value;
-    const fechaCreacion = form.fechaCreacion.value;
-    const fechaEntrega = form.fechaEntrega.value;
-    const cantidad = form.cantidad.value;
-    const valorTotal = form.valorTotal.value;
-
-    // Verificar si hay campos vacíos
-    if (!nombreCliente || !descripcionProducto || !encargadoProduccion || !estadoOrden || !fechaCreacion || !fechaEntrega || !cantidad || !valorTotal) {
-        alert('Por favor, complete todos los campos.');
-        return;
-    }
-
-    const order = {
-        nombreCliente,
-        descripcionProducto,
-        encargadoProduccion,
-        estadoOrden,
-        fechaCreacion,
-        fechaEntrega,
-        cantidad,
-        valorTotal,
-    };
-
-    if (editIndex !== null) {
-        // Editar orden existente
-        updateOrder(editIndex, order);
-    } else {
-        // Añadir nueva orden
-        addOrder(order);
-    }
-
-    form.reset();
-    editIndex = null;
-    saveOrders(); // Guardar órdenes en Local Storage
-}
-
-// Añadir una nueva orden a la tabla
-function addOrder(order) {
-    const tbody = document.getElementById('listaOrdenes');
-    const row = document.createElement('tr');
-
-    const estado = obtenerAlertaEstado(order.estadoOrden);
-
-    row.innerHTML = `
-        <td>${order.nombreCliente}</td>
-        <td>${order.descripcionProducto}</td>
-        <td>${order.encargadoProduccion}</td>
-        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
-        <td>${order.fechaCreacion}</td>
-        <td>${order.fechaEntrega}</td>
-        <td>${order.cantidad}</td>
-        <td>${order.valorTotal}</td>
-        <td>
-            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
-        </td>
-    `;
-
-    tbody.appendChild(row);
-}
-
-// Editar una orden existente
-function editOrder(button) {
-    const row = button.closest('tr');
-    const cells = row.getElementsByTagName('td');
-
-    document.getElementById('nombreCliente').value = cells[0].innerText;
-    document.getElementById('descripcionProducto').value = cells[1].innerText;
-    document.getElementById('encargadoProduccion').value = cells[2].innerText;
-    document.getElementById('estadoOrden').value = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
-    document.getElementById('fechaCreacion').value = cells[4].innerText;
-    document.getElementById('fechaEntrega').value = cells[5].innerText;
-    document.getElementById('cantidad').value = cells[6].innerText;
-    document.getElementById('valorTotal').value = cells[7].innerText;
-
-    editIndex = Array.from(row.parentNode.children).indexOf(row);
-}
-
-// Obtener el estado de la orden desde el texto del badge
-function obtenerEstadoOrdenDesdeBadge(textoBadge) {
-    switch (textoBadge) {
-        case 'Pendiente':
-            return 'pendiente';
-        case 'En Proceso':
-            return 'en_proceso';
-        case 'Completada':
-            return 'completada';
-        case 'Cancelada':
-            return 'cancelada';
-        default:
-            return 'desconocido';
-    }
-}
-
-// Actualizar una orden existente
-function updateOrder(index, order) {
-    const tbody = document.getElementById('listaOrdenes');
-    const row = tbody.children[index];
-
-    const estado = obtenerAlertaEstado(order.estadoOrden);
-
-    row.innerHTML = `
-        <td>${order.nombreCliente}</td>
-        <td>${order.descripcionProducto}</td>
-        <td>${order.encargadoProduccion}</td>
-        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
-        <td>${order.fechaCreacion}</td>
-        <td>${order.fechaEntrega}</td>
-        <td>${order.cantidad}</td>
-        <td>${order.valorTotal}</td>
-        <td>
-            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
-        </td>
-    `;
-    saveOrders(); // Guardar órdenes en Local Storage
-}
-
-// Eliminar una orden
-function deleteOrder(button) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta orden?')) {
-        const row = button.closest('tr');
-        row.remove();
-        saveOrders(); // Guardar órdenes en Local Storage
-    }
-}
-
-// Manejar la búsqueda de órdenes
-function handleSearch(e) {
-    const query = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#listaOrdenes tr');
-
-    rows.forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const text = Array.from(cells).map(cell => cell.innerText.toLowerCase()).join(' ');
-        row.style.display = text.includes(query) ? '' : 'none';
-    });
-}
-
-// Obtener la clase y texto para el estado de la orden
-function obtenerAlertaEstado(estado) {
-    switch (estado) {
-        case 'pendiente':
-            return { clase: "bg-warning text-dark", texto: "Pendiente" };  // Amarillo
-        case 'en_proceso':
-            return { clase: "bg-info text-dark", texto: "En Proceso" };  // Azul Claro
-        case 'completada':
-            return { clase: "bg-success text-white", texto: "Completada" };  // Verde
-        case 'cancelada':
-            return { clase: "bg-danger text-white", texto: "Cancelada" };  // Rojo
-        default:
-            return { clase: "bg-secondary text-white", texto: "Desconocido" };  // Gris
-    }
-}
-
-// Guardar las órdenes en Local Storage
-function saveOrders() {
-    const orders = [];
-    document.querySelectorAll('#listaOrdenes tr').forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const estado = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
-        const order = {
-            nombreCliente: cells[0].innerText,
-            descripcionProducto: cells[1].innerText,
-            encargadoProduccion: cells[2].innerText,
-            estadoOrden: estado,
-            fechaCreacion: cells[4].innerText,
-            fechaEntrega: cells[5].innerText,
-            cantidad: cells[6].innerText,
-            valorTotal: cells[7].innerText
-        };
-        orders.push(order);
-    });
-    localStorage.setItem('orders', JSON.stringify(orders));
-}
-
-// Cargar las órdenes desde Local Storage
-function loadOrders() {
-    const orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.forEach(order => addOrder(order));
-}
-
-// Simula una base de datos de productos
-let productos = [];
-
-// Cargar productos en el select del modal
-function cargarProductos() {
-    let select = document.getElementById("nombreProductoStock");
-    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
-
-    productos.forEach(producto => {
-        let option = document.createElement("option");
-        option.value = producto.nombreProducto;
-        option.textContent = producto.nombreProducto;
-        select.appendChild(option);
-    });
-}
-
-// Actualizar cantidad actual cuando se selecciona un producto
-function actualizarCantidadActual() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        document.getElementById("cantidadActual").value = producto.cantidadInicial;
-    } else {
-        document.getElementById("cantidadActual").value = "";
-    }
-}
-
-// Función para agregar stock
-function agregarStock() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
-    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
-
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        if (cantidadAgregar > 0) {
-            producto.cantidadInicial -= cantidadAgregar;
-            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
-            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
-            
-            // Actualizar el cuadro de cantidad en el formulario principal
-            let cantidadInput = document.getElementById("cantidad");
-            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
-            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
-
-            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
-            guardarEnLocalStorage();
-            alert("Stock descontado correctamente.");
-            document.getElementById("agregarStockForm").reset();
-            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
-        } else {
-            alert("La cantidad a descontar debe ser mayor a cero.");
-        }
-    } else {
-        alert("Producto no encontrado.");
-    }
-}
-
-// Guardar en Local Storage
-function guardarEnLocalStorage() {
-    localStorage.setItem("productos", JSON.stringify(productos));
-}
-
-// Cargar productos desde Local Storage al cargar la página
-function cargarDesdeLocalStorage() {
-    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados) {
-        productos = productosGuardados;
-        cargarProductos();
-    }
-}
-
-
-
-//MODAL DE CLIENTE 
-//ESPACIO RESERVADO PARA PONER EL CODIGO DEL MODAL PARA EL PROCESO DEL CLIENTE 
-
-
-
-</script>
-
-
-
-<script>
-//ESTO ES LO DE LA CANTIDA Y EL STOCK, LAS FUNCIONES DEL RESTO DEL PROYETO VA A ARRIBA
-
-// Cargar productos en el select del modal
-function cargarProductos() {
-    let select = document.getElementById("nombreProductoStock");
-    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
-
-    productos.forEach(producto => {
-        let option = document.createElement("option");
-        option.value = producto.nombreProducto;
-        option.textContent = producto.nombreProducto;
-        select.appendChild(option);
-    });
-}
-
-// Actualizar cantidad actual cuando se selecciona un producto
-function actualizarCantidadActual() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        document.getElementById("cantidadActual").value = producto.cantidadInicial;
-    } else {
-        document.getElementById("cantidadActual").value = "";
-    }
-}
-
-// Función para agregar stock
-function agregarStock() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
-    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
-
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        if (cantidadAgregar > 0) {
-            producto.cantidadInicial -= cantidadAgregar;
-            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
-            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
-            
-            // Actualizar el cuadro de cantidad en el formulario principal
-            let cantidadInput = document.getElementById("cantidad");
-            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
-            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
-
-            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
-            guardarEnLocalStorage();
-            alert("Stock descontado correctamente.");
-            document.getElementById("agregarStockForm").reset();
-            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
-        } else {
-            alert("La cantidad a descontar debe ser mayor a cero.");
-        }
-    } else {
-        alert("Producto no encontrado.");
-    }
-}
-
-// Guardar en LocalStorage
-function guardarEnLocalStorage() {
-    localStorage.setItem("productos", JSON.stringify(productos));
-}
-
-// Cargar productos desde LocalStorage al cargar la página
-function cargarDesdeLocalStorage() {
-    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados) {
-        productos = productosGuardados;
-        cargarProductos();
-    }
-}
-
-// Inicializar
-document.addEventListener("DOMContentLoaded", function () {
-    cargarDesdeLocalStorage();
-});
-    </script>
-
-
-
-
-
-
+<script src="JS/produccion.js"></script>
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
