@@ -53,9 +53,10 @@
                             </a>
                             <h3>Sign In</h3>
                         </div>
+                        <form action="send_code.php" method="POST">
                         <div class="form-floating mb-3">
-                            <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                            <label for="floatingInput">Email address</label>
+                        <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com" required>
+                        <label for="floatingInput">Email address</label>
                         </div>
                         <div class="form-floating mb-4">
                             <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
@@ -68,7 +69,7 @@
                             </div>
                             <a href="forgotPassword.php">Forgot Password</a>
                         </div>
-                        <a class="btn-getstarted" href="">Login</a>
+                        <a href="../inicio.php">INICIAR</a>
                         </div>
                 </div>
             </div>

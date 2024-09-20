@@ -1,419 +1,358 @@
-    function filtrarHistorial() {
-        const modalBody = document.getElementById('modalBody');
-        const searchValue = document.getElementById('searchHistorial').value.toLowerCase();
-        const listaHistorial = document.getElementById('listaHistorial');
+// Variables globales
+let ordenes = [];
+let encargados = JSON.parse(localStorage.getItem('encargados')) || []; // Cargar encargados desde Local Storage
+let materiales = [];
 
-        // Limpiar la lista antes de agregar nuevos elementos
-        listaHistorial.innerHTML = '';
+// Función para inicializar la página
+document.addEventListener('DOMContentLoaded', function() {
+    cargarEncargados();
+    loadOrders();
+    configurarEventListeners();
+});
 
-        let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+// Cargar encargados desde Local Storage
+function cargarEncargados() {
+    const select = document.getElementById('encargadoProduccion');
+    select.innerHTML = ''; // Limpiar el select
+    encargados.forEach(encargado => {
+        const option = document.createElement('option');
+        option.value = encargado;
+        option.textContent = encargado;
+        select.appendChild(option);
+    });
+    actualizarListaEncargados(); // Actualizar la lista en el modal
+}
 
-        if (clientes.length === 0) {
-            listaHistorial.innerHTML = '<li class="list-group-item">No hay datos disponibles.</li>';
-            return;
-        }
-
-        // Filtrar clientes basado en el valor del input
-        const filtrados = clientes.filter(cliente =>
-            cliente.nombre.toLowerCase().includes(searchValue) ||
-            cliente.email.toLowerCase().includes(searchValue) ||
-            cliente.telefono.toLowerCase().includes(searchValue)
-        );
-
-        if (filtrados.length === 0) {
-            listaHistorial.innerHTML = '<li class="list-group-item">No se encontraron resultados.</li>';
-        } else {
-            filtrados.forEach(cliente => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.innerHTML = `
-                <strong>Nombre:</strong> ${cliente.nombre} <br>
-                <strong>Tipo:</strong> ${cliente.tipo} <br>
-                <strong>Contacto:</strong> ${cliente.contacto} <br>
-                <strong>Teléfono:</strong> ${cliente.telefono} <br>
-                <strong>Email:</strong> ${cliente.email} <br>
-                <strong>Dirección:</strong> ${cliente.direccion} <br>
-                <strong>NIT:</strong> ${cliente.nit || 'No disponible'} <br>
-                <strong>Giro Negocio:</strong> ${cliente.giroNegocio || 'No disponible'} <br>
-                <strong>Fecha Registro:</strong> ${cliente.fechaRegistro}
-                <button class="btn btn-primary btn-sm mt-2" onclick="copiarNombre('${cliente.nombre}')">Seleccionar</button>
-            `;
-                listaHistorial.appendChild(li);
-            });
-        }
+// Agregar nuevo encargado y guardar en Local Storage
+function agregarNuevoEncargado() {
+    const nuevoEncargado = document.getElementById('nuevoEncargado').value.trim();
+    if (nuevoEncargado && !encargados.includes(nuevoEncargado)) {
+        encargados.push(nuevoEncargado);
+        localStorage.setItem('encargados', JSON.stringify(encargados)); // Guardar en Local Storage
+        cargarEncargados();
+        document.getElementById('nuevoEncargado').value = '';
     }
+}
 
-    function copiarNombre(nombre) {
-        const nombreInput = document.getElementById('nombreCliente'); // Cambia por el ID del input donde quieras pegar el nombre
-        nombreInput.value = nombre;
+// Actualizar lista de encargados en el modal
+function actualizarListaEncargados() {
+    const lista = document.getElementById('listaEncargados');
+    lista.innerHTML = '';
+    encargados.forEach(encargado => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.textContent = encargado;
+        const btnEliminar = document.createElement('button');
+        btnEliminar.className = "btn btn-danger btn-sm";
+        btnEliminar.textContent = "Eliminar";
+        btnEliminar.onclick = function() {
+            encargados = encargados.filter(e => e !== encargado);
+            localStorage.setItem('encargados', JSON.stringify(encargados)); // Guardar en Local Storage
+            actualizarListaEncargados();
+            cargarEncargados();
+        };
+        li.appendChild(btnEliminar);
+        lista.appendChild(li);
+    });
+}
 
-        // Opcional: Cerrar el modal después de seleccionar el cliente
-        const modal = bootstrap.Modal.getInstance(document.getElementById('historialClienteModal'));
-        modal.hide();
-    }
+// Configurar event listeners
+function configurarEventListeners() {
+    document.getElementById('ordenProduccionForm').addEventListener('submit', manejarSubmitOrden);
+    document.getElementById('buscar').addEventListener('input', filtrarOrdenes);
+    document.getElementById('agregarEncargado').addEventListener('click', agregarNuevoEncargado);
+    document.getElementById('estadoOrden').addEventListener('change', actualizarAlertaEstado);
+    document.getElementById('prioridadOrden').addEventListener('change', actualizarAlertaPrioridad);
+    document.getElementById('searchHistorial').addEventListener('input', filtrarHistorial);
+}
 
-        // Capturar los datos del formulario
-        const orden = {
+// Manejar el envío del formulario de orden
+function manejarSubmitOrden(event) {
+    event.preventDefault();
+    const nuevaOrden = {
+        nombreCliente: document.getElementById('nombreCliente').value,
+        descripcionProducto: document.getElementById('descripcionProducto').value,
+        encargadoProduccion: document.getElementById('encargadoProduccion').value,
+        estadoOrden: document.getElementById('estadoOrden').value,
+        prioridadOrden: document.getElementById('prioridadOrden').value,
+        fechaCreacion: document.getElementById('fechaCreacion').value,
+        fechaEntrega: document.getElementById('fechaEntrega').value,
+        valorTotal: document.getElementById('valorTotal').value
+    };
+    addOrder(nuevaOrden);
+    event.target.reset();
+    actualizarAlertaEstado();
+    actualizarAlertaPrioridad();
+}
+
+// Añadir una nueva orden a la tabla
+function addOrder(order) {
+    const tbody = document.getElementById('listaOrdenes');
+    const row = document.createElement('tr');
+    const estadoAlerta = obtenerAlertaEstado(order.estadoOrden);
+    const prioridadAlerta = obtenerAlertaPrioridad(order.prioridadOrden);
+    
+    row.innerHTML = 
+        `<td>${order.nombreCliente}</td>
+        <td>${order.descripcionProducto}</td>
+        <td>${order.encargadoProduccion}</td>
+        <td><span class="badge ${estadoAlerta.clase}">${estadoAlerta.texto}</span></td>
+        <td><span class="badge ${prioridadAlerta.clase}">${prioridadAlerta.texto}</span></td>
+        <td>${order.fechaCreacion}</td>
+        <td>${order.fechaEntrega}</td>
+        <td>${order.valorTotal}</td>
+        <td>
+            <button class="btn btn-sm btn-warning" onclick="editarOrden(this)">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="eliminarOrden(this)">Eliminar</button>
+            <button class="btn btn-sm btn-info" onclick="verOrden(${ordenes.length})">Ver</button>
+        </td>`;
+    
+    tbody.appendChild(row);
+    ordenes.push(order);
+    saveOrders(); // Guardar las órdenes en Local Storage
+}
+
+// Función para editar una orden
+function editarOrden(button) {
+    const row = button.closest('tr');
+    const cells = row.cells;
+
+    document.getElementById('nombreCliente').value = cells[0].textContent;
+    document.getElementById('descripcionProducto').value = cells[1].textContent;
+    document.getElementById('encargadoProduccion').value = cells[2].textContent;
+    document.getElementById('estadoOrden').value = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').textContent);
+    document.getElementById('prioridadOrden').value = obtenerPrioridadOrdenDesdeBadge(cells[4].querySelector('.badge').textContent);
+    document.getElementById('fechaCreacion').value = cells[5].textContent;
+    document.getElementById('fechaEntrega').value = cells[6].textContent;
+    document.getElementById('valorTotal').value = cells[7].textContent;
+
+    const guardarBtn = document.createElement('button');
+    guardarBtn.className = 'btn btn-sm btn-warning'; // Color amarillo
+    guardarBtn.textContent = 'Guardar Cambios';
+    guardarBtn.onclick = function() {
+        const ordenEditada = {
             nombreCliente: document.getElementById('nombreCliente').value,
             descripcionProducto: document.getElementById('descripcionProducto').value,
             encargadoProduccion: document.getElementById('encargadoProduccion').value,
             estadoOrden: document.getElementById('estadoOrden').value,
+            prioridadOrden: document.getElementById('prioridadOrden').value,
             fechaCreacion: document.getElementById('fechaCreacion').value,
             fechaEntrega: document.getElementById('fechaEntrega').value,
-            cantidad: document.getElementById('cantidad').value,
             valorTotal: document.getElementById('valorTotal').value
         };
+        
+        // Actualizar la fila en la tabla
+        cells[0].textContent = ordenEditada.nombreCliente;
+        cells[1].textContent = ordenEditada.descripcionProducto;
+        cells[2].textContent = ordenEditada.encargadoProduccion;
+        
+        const estadoAlerta = obtenerAlertaEstado(ordenEditada.estadoOrden);
+        cells[3].innerHTML = `<span class="badge ${estadoAlerta.clase}">${estadoAlerta.texto}</span>`;
+        
+        const prioridadAlerta = obtenerAlertaPrioridad(ordenEditada.prioridadOrden);
+        cells[4].innerHTML = `<span class="badge ${prioridadAlerta.clase}">${prioridadAlerta.texto}</span>`;
+        
+        cells[5].textContent = ordenEditada.fechaCreacion;
+        cells[6].textContent = ordenEditada.fechaEntrega;
+        cells[7].textContent = ordenEditada.valorTotal;
 
+        // Actualizar el registro en el array de órdenes
+        const index = Array.from(document.querySelectorAll('#listaOrdenes tr')).indexOf(row);
+        ordenes[index] = ordenEditada;
 
+        // Guardar cambios en Local Storage
+        saveOrders();
 
-    let editIndex = null;
-
-    // Cargar las órdenes y productos desde Local Storage al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-    loadOrders();
-    cargarDesdeLocalStorage();
-    document.getElementById('ordenProduccionForm').addEventListener('submit', handleFormSubmit);
-    document.getElementById('buscar').addEventListener('input', handleSearch);
-    });
-
-    // Manejar el envío del formulario de orden de producción
-    function handleFormSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-
-    const nombreCliente = form.nombreCliente.value.trim();
-    const descripcionProducto = form.descripcionProducto.value.trim();
-    const encargadoProduccion = form.encargadoProduccion.value.trim();
-    const estadoOrden = form.estadoOrden.value;
-    const fechaCreacion = form.fechaCreacion.value;
-    const fechaEntrega = form.fechaEntrega.value;
-    const cantidad = form.cantidad.value;
-    const valorTotal = form.valorTotal.value;
-
-    // Verificar si hay campos vacíos
-    if (!nombreCliente || !descripcionProducto || !encargadoProduccion || !estadoOrden || !fechaCreacion || !fechaEntrega || !cantidad || !valorTotal) {
-        alert('Por favor, complete todos los campos.');
-        return;
-    }
-
-    const order = {
-        nombreCliente,
-        descripcionProducto,
-        encargadoProduccion,
-        estadoOrden,
-        fechaCreacion,
-        fechaEntrega,
-        cantidad,
-        valorTotal,
+        // Eliminar el botón de "Guardar Cambios"
+        guardarBtn.remove();
     };
 
-    if (editIndex !== null) {
-        // Editar orden existente
-        updateOrder(editIndex, order);
-    } else {
-        // Añadir nueva orden
-        addOrder(order);
-    }
+    button.parentNode.appendChild(guardarBtn);
+}
 
-    form.reset();
-    editIndex = null;
-    saveOrders(); // Guardar órdenes en Local Storage
-    }
-
-    // Añadir una nueva orden a la tabla
-    function addOrder(order) {
-    const tbody = document.getElementById('listaOrdenes');
-    const row = document.createElement('tr');
-
-    const estado = obtenerAlertaEstado(order.estadoOrden);
-
-    row.innerHTML = `
-        <td>${order.nombreCliente}</td>
-        <td>${order.descripcionProducto}</td>
-        <td>${order.encargadoProduccion}</td>
-        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
-        <td>${order.fechaCreacion}</td>
-        <td>${order.fechaEntrega}</td>
-        <td>${order.cantidad}</td>
-        <td>${order.valorTotal}</td>
-        <td>
-            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
-        </td>
-    `;
-
-    tbody.appendChild(row);
-    }
-
-    // Editar una orden existente
-    function editOrder(button) {
-    const row = button.closest('tr');
-    const cells = row.getElementsByTagName('td');
-
-    document.getElementById('nombreCliente').value = cells[0].innerText;
-    document.getElementById('descripcionProducto').value = cells[1].innerText;
-    document.getElementById('encargadoProduccion').value = cells[2].innerText;
-    document.getElementById('estadoOrden').value = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
-    document.getElementById('fechaCreacion').value = cells[4].innerText;
-    document.getElementById('fechaEntrega').value = cells[5].innerText;
-    document.getElementById('cantidad').value = cells[6].innerText;
-    document.getElementById('valorTotal').value = cells[7].innerText;
-
-    editIndex = Array.from(row.parentNode.children).indexOf(row);
-    }
-
-    // Obtener el estado de la orden desde el texto del badge
-    function obtenerEstadoOrdenDesdeBadge(textoBadge) {
-    switch (textoBadge) {
-        case 'Pendiente':
-            return 'pendiente';
-        case 'En Proceso':
-            return 'en_proceso';
-        case 'Completada':
-            return 'completada';
-        case 'Cancelada':
-            return 'cancelada';
-        default:
-            return 'desconocido';
-    }
-    }
-
-    // Actualizar una orden existente
-    function updateOrder(index, order) {
-    const tbody = document.getElementById('listaOrdenes');
-    const row = tbody.children[index];
-
-    const estado = obtenerAlertaEstado(order.estadoOrden);
-
-    row.innerHTML = `
-        <td>${order.nombreCliente}</td>
-        <td>${order.descripcionProducto}</td>
-        <td>${order.encargadoProduccion}</td>
-        <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
-        <td>${order.fechaCreacion}</td>
-        <td>${order.fechaEntrega}</td>
-        <td>${order.cantidad}</td>
-        <td>${order.valorTotal}</td>
-        <td>
-            <button class="btn btn-warning btn-sm" onclick="editOrder(this)">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrder(this)">Eliminar</button>
-        </td>
-    `;
-    saveOrders(); // Guardar órdenes en Local Storage
-    }
-
-    // Eliminar una orden
-    function deleteOrder(button) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta orden?')) {
-        const row = button.closest('tr');
-        row.remove();
-        saveOrders(); // Guardar órdenes en Local Storage
-    }
-    }
-
-    // Manejar la búsqueda de órdenes
-    function handleSearch(e) {
-    const query = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#listaOrdenes tr');
-
-    rows.forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const text = Array.from(cells).map(cell => cell.innerText.toLowerCase()).join(' ');
-        row.style.display = text.includes(query) ? '' : 'none';
-    });
-    }
-
-    // Obtener la clase y texto para el estado de la orden
-    function obtenerAlertaEstado(estado) {
+// Obtener la clase y texto para el estado de la orden
+function obtenerAlertaEstado(estado) {
     switch (estado) {
         case 'pendiente':
-            return { clase: "bg-warning text-dark", texto: "Pendiente" };  // Amarillo
+            return { clase: "bg-warning text-dark", texto: "Pendiente" };
         case 'en_proceso':
-            return { clase: "bg-info text-dark", texto: "En Proceso" };  // Azul Claro
+            return { clase: "bg-info text-dark", texto: "En Proceso" };
         case 'completada':
-            return { clase: "bg-success text-white", texto: "Completada" };  // Verde
+            return { clase: "bg-success text-white", texto: "Completada" };
         case 'cancelada':
-            return { clase: "bg-danger text-white", texto: "Cancelada" };  // Rojo
+            return { clase: "bg-danger text-white", texto: "Cancelada" };
         default:
-            return { clase: "bg-secondary text-white", texto: "Desconocido" };  // Gris
+            return { clase: "bg-secondary text-white", texto: "Desconocido" };
     }
-    }
+}
 
-    // Guardar las órdenes en Local Storage
-    function saveOrders() {
-    const orders = [];
-    document.querySelectorAll('#listaOrdenes tr').forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const estado = obtenerEstadoOrdenDesdeBadge(cells[3].querySelector('.badge').innerText);
-        const order = {
-            nombreCliente: cells[0].innerText,
-            descripcionProducto: cells[1].innerText,
-            encargadoProduccion: cells[2].innerText,
-            estadoOrden: estado,
-            fechaCreacion: cells[4].innerText,
-            fechaEntrega: cells[5].innerText,
-            cantidad: cells[6].innerText,
-            valorTotal: cells[7].innerText
-        };
-        orders.push(order);
-    });
-    localStorage.setItem('orders', JSON.stringify(orders));
-    }
+// Actualizar alerta de estado (sin cuadro grande)
+function actualizarAlertaEstado() {
+    const estado = document.getElementById('estadoOrden').value;
+    const alerta = document.getElementById('alertaEstado');
+    const texto = document.getElementById('alertaEstadoTexto');
+    const estadoAlerta = obtenerAlertaEstado(estado);
+    
+    alerta.className = `alert ${estadoAlerta.clase}`;
+    texto.textContent = `Estado de la orden: ${estadoAlerta.texto}`;
+    alerta.style.display = 'block'; // Asegúrate de que el alerta esté visible
+}
 
-    // Cargar las órdenes desde Local Storage
-    function loadOrders() {
-    const orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.forEach(order => addOrder(order));
-    }
-
-    // Simula una base de datos de productos
-    let productos = [];
-
-    // Cargar productos en el select del modal
-    function cargarProductos() {
-    let select = document.getElementById("nombreProductoStock");
-    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
-
-    productos.forEach(producto => {
-        let option = document.createElement("option");
-        option.value = producto.nombreProducto;
-        option.textContent = producto.nombreProducto;
-        select.appendChild(option);
-    });
-    }
-
-    // Actualizar cantidad actual cuando se selecciona un producto
-    function actualizarCantidadActual() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        document.getElementById("cantidadActual").value = producto.cantidadInicial;
-    } else {
-        document.getElementById("cantidadActual").value = "";
-    }
-    }
-
-    // Función para agregar stock
-    function agregarStock() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
-    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
-
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        if (cantidadAgregar > 0) {
-            producto.cantidadInicial -= cantidadAgregar;
-            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
-            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
-            
-            // Actualizar el cuadro de cantidad en el formulario principal
-            let cantidadInput = document.getElementById("cantidad");
-            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
-            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
-
-            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
-            guardarEnLocalStorage();
-            alert("Stock descontado correctamente.");
-            document.getElementById("agregarStockForm").reset();
-            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
+// Filtrar órdenes
+function filtrarOrdenes() {
+    const filtro = document.getElementById('buscar').value.toLowerCase();
+    const filas = document.getElementById('listaOrdenes').getElementsByTagName('tr');
+    for (let fila of filas) {
+        const cliente = fila.cells[0].textContent.toLowerCase();
+        const descripcion = fila.cells[1].textContent.toLowerCase();
+        if (cliente.includes(filtro) || descripcion.includes(filtro)) {
+            fila.style.display = '';
         } else {
-            alert("La cantidad a descontar debe ser mayor a cero.");
+            fila.style.display = 'none';
         }
-    } else {
-        alert("Producto no encontrado.");
     }
+}
+
+// Obtener la clase y texto para la prioridad de la orden
+function obtenerAlertaPrioridad(prioridad) {
+    switch (prioridad) {
+        case 'alta':
+            return { clase: "bg-danger text-white", texto: "Alta" }; // Rojo para alta
+        case 'media':
+            return { clase: "bg-warning text-dark", texto: "Media" };
+        case 'baja':
+            return { clase: "bg-success text-white", texto: "Baja" }; // Verde para baja
+        default:
+            return { clase: "bg-secondary text-white", texto: "Desconocido" };
     }
+}
 
-    // Guardar en Local Storage
-    function guardarEnLocalStorage() {
-    localStorage.setItem("productos", JSON.stringify(productos));
-    }
+// Actualizar alerta de prioridad
+function actualizarAlertaPrioridad() {
+    const prioridad = document.getElementById('prioridadOrden').value;
+    const alerta = document.getElementById('alertaPrioridad');
+    const texto = document.getElementById('alertaPrioridadTexto');
+    const prioridadAlerta = obtenerAlertaPrioridad(prioridad);
+    
+    alerta.className = `alert ${prioridadAlerta.clase}`;
+    texto.textContent = `Prioridad de la orden: ${prioridadAlerta.texto}`;
+    alerta.style.display = 'block';
+}
 
-    // Cargar productos desde Local Storage al cargar la página
-    function cargarDesdeLocalStorage() {
-    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados) {
-        productos = productosGuardados;
-        cargarProductos();
-    }
-    }
+// Guardar las órdenes en Local Storage
+function saveOrders() {
+    localStorage.setItem('ordenes', JSON.stringify(ordenes));
+}
+
+// Cargar las órdenes desde Local Storage
+function loadOrders() {
+    const ordenesGuardadas = JSON.parse(localStorage.getItem('ordenes')) || [];
+    ordenesGuardadas.forEach(orden => addOrder(orden));
+}
+
+// Funciones para la visualización de órdenes
+function eliminarOrden(button) {
+    const row = button.closest('tr');
+    const index = Array.from(document.querySelectorAll('#listaOrdenes tr')).indexOf(row);
+    ordenes.splice(index, 1);
+    row.remove();
+    saveOrders(); // Guardar cambios en Local Storage
+}
+
+// Función para ver una orden en detalle
+function verOrden(index) {
+    const orden = ordenes[index];
+    const modalBody = document.getElementById('modalOrdenBody');
+    modalBody.innerHTML = `
+        <p><strong>Cliente:</strong> ${orden.nombreCliente}</p>
+        <p><strong>Descripción del Producto:</strong> ${orden.descripcionProducto}</p>
+        <p><strong>Encargado de Producción:</strong> ${orden.encargadoProduccion}</p>
+        <p><strong>Estado de la Orden:</strong> ${orden.estadoOrden}</p>
+        <p><strong>Prioridad de la Orden:</strong> ${orden.prioridadOrden}</p>
+        <p><strong>Fecha de Creación:</strong> ${orden.fechaCreacion}</p>
+        <p><strong>Fecha de Entrega:</strong> ${orden.fechaEntrega}</p>
+        <p><strong>Valor Total:</strong> ${orden.valorTotal}</p>
+    `;
+    const modal = new bootstrap.Modal(document.getElementById('modalOrden'));
+    modal.show();
+}
 
 
-    //ESTO ES LO DE LA CANTIDA Y EL STOCK, LAS FUNCIONES DEL RESTO DEL PROYETO VA A ARRIBA
-
-    // Cargar productos en el select del modal
-    function cargarProductos() {
-    let select = document.getElementById("nombreProductoStock");
-    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
-
-    productos.forEach(producto => {
-        let option = document.createElement("option");
-        option.value = producto.nombreProducto;
-        option.textContent = producto.nombreProducto;
-        select.appendChild(option);
-    });
-    }
-
-    // Actualizar cantidad actual cuando se selecciona un producto
-    function actualizarCantidadActual() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        document.getElementById("cantidadActual").value = producto.cantidadInicial;
-    } else {
-        document.getElementById("cantidadActual").value = "";
-    }
-    }
-
-    // Función para agregar stock
-    function agregarStock() {
-    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
-    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
-    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
-
-    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
-    if (producto) {
-        if (cantidadAgregar > 0) {
-            producto.cantidadInicial -= cantidadAgregar;
-            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
-            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
-            
-            // Actualizar el cuadro de cantidad en el formulario principal
-            let cantidadInput = document.getElementById("cantidad");
-            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
-            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
-
-            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
-            guardarEnLocalStorage();
-            alert("Stock descontado correctamente.");
-            document.getElementById("agregarStockForm").reset();
-            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
+// Funciones para el historial del cliente
+function filtrarHistorial() {
+    const filtro = document.getElementById('searchHistorial').value.toLowerCase();
+    const items = document.getElementById('listaHistorial').getElementsByTagName('li');
+    for (let item of items) {
+        if (item.textContent.toLowerCase().includes(filtro)) {
+            item.style.display = '';
         } else {
-            alert("La cantidad a descontar debe ser mayor a cero.");
+            item.style.display = 'none';
         }
-    } else {
-        alert("Producto no encontrado.");
     }
-    }
+}
 
-    // Guardar en LocalStorage
-    function guardarEnLocalStorage() {
-    localStorage.setItem("productos", JSON.stringify(productos));
-    }
+function copiarNombre(nombre) {
+    document.getElementById('nombreCliente').value = nombre;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('historialClienteModal'));
+    modal.hide();
+}
 
-    // Cargar productos desde LocalStorage al cargar la página
-    function cargarDesdeLocalStorage() {
-    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
-    if (productosGuardados) {
-        productos = productosGuardados;
-        cargarProductos();
-    }
-    }
+// Funciones para el modal de agregar stock
+function agregarMaterial() {
+    const materialesDiv = document.getElementById('materiales');
+    const nuevoMaterial = document.createElement('div');
+    nuevoMaterial.className = 'd-flex mb-2 align-items-center';
+    nuevoMaterial.innerHTML = 
+        `<select class="form-select me-2" required>
+            <option value="" disabled selected>Seleccione un material</option>
+            ${materiales.map(material => `<option value="${material.nombre}">${material.nombre}</option>`).join('')}
+        </select>
+        <input type="number" class="form-control me-2" placeholder="Cantidad Actual" disabled>
+        <input type="number" class="form-control me-2" placeholder="Cantidad a Utilizar" required>
+        <button type="button" class="btn btn-danger" onclick="eliminarMaterial(this)">Eliminar</button>`;
+    materialesDiv.appendChild(nuevoMaterial);
+}
 
-    // Inicializar
-    document.addEventListener("DOMContentLoaded", function () {
-    cargarDesdeLocalStorage();
-    });
+function eliminarMaterial(button) {
+    button.closest('.d-flex').remove();
+}
+
+function submitForm() {
+    // Implementar lógica para guardar los materiales utilizados
+    console.log('Guardando materiales...');
+    $('#agregarStockModal').modal('hide');
+}
+
+// Función para abrir el modal de compra (a implementar)
+function abrirModalCompra() {
+    console.log('Abriendo modal de compra');
+}
+
+//BARRA DE BUSQUEDAD//
+
+// Funcionalidad de búsqueda
+document.getElementById("buscar").addEventListener("input", function() {
+    let query = this.value.toLowerCase();  // Convierte la búsqueda en minúsculas
+    let filas = document.getElementById("listaOrdenes").getElementsByTagName("tr");
+
+    for (let i = 0; i < filas.length; i++) {
+        let celdas = filas[i].getElementsByTagName("td");
+
+        let nombreCliente = celdas[0].innerText.toLowerCase();
+        let encargado = celdas[2].innerText.toLowerCase();
+        let estado = celdas[3].innerText.toLowerCase();
+        let prioridad = celdas[4].innerText.toLowerCase();
+
+        // Verifica si alguna de las columnas contiene la query
+        if (nombreCliente.includes(query) || encargado.includes(query) || estado.includes(query) || prioridad.includes(query)) {
+            filas[i].style.display = "";  // Muestra la fila si coincide
+        } else {
+            filas[i].style.display = "none";  // Oculta la fila si no coincide
+        }
+    }
+});
+
+
 
 
 

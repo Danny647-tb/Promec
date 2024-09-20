@@ -163,39 +163,40 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+
 <div class="container mt-5">
-    <img src="img/Logo2.png" alt="Logo" class="logo">
+    <img src="img/Logo2.png" alt="Logo" class="logo mb-4">
     <h2 class="text-center text-danger">Registrar Orden de Producción</h2>
     <form id="ordenProduccionForm" class="form-container">
 
-    <div class="form-group">
+        <div class="form-group mb-3">
             <label for="nombreCliente" class="form-label text-danger">Nombre del Cliente</label>
             <div class="input-group">
-                <input type="text" class="form-control" id="nombreCliente" placeholder="Seleccionar cliente..."
-                       required>
-                <!-- Botón que abre el modal y carga los datos -->
-                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal"
-                        data-bs-target="#historialClienteModal">
+                <input type="text" class="form-control" id="nombreCliente" placeholder="Seleccionar cliente..." required>
+                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#historialClienteModal">
                     Ver Historial
                 </button>
             </div>
         </div>
 
-
-
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="descripcionProducto" class="form-label">Descripción del Producto</label>
             <textarea class="form-control" id="descripcionProducto" rows="3" required></textarea>
         </div>
 
-        
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="encargadoProduccion" class="form-label">Encargado de la Producción</label>
-            <input type="text" class="form-control" id="encargadoProduccion" required>
+            <div class="input-group">
+                <select class="form-select" id="encargadoProduccion" required>
+                    <option value="">Seleccione...</option>
+                </select>
+                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#encargadoProduccionModal">
+                    <i class="bi bi-plus"></i> Agregar Encargado
+                </button>
+            </div>
         </div>
 
-
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="estadoOrden" class="form-label">Estado de la Orden</label>
             <select class="form-select" id="estadoOrden" required>
                 <option value="" disabled selected>Selecciona un estado</option>
@@ -205,21 +206,41 @@
                 <option value="cancelada">Cancelada</option>
             </select>
         </div>
+
+        <div class="form-group mb-3">
+            <label for="prioridadOrden" class="form-label">Prioridad de la Orden</label>
+            <select class="form-select" id="prioridadOrden" required>
+                <option value="" disabled selected>Selecciona una prioridad</option>
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+            </select>
+        </div>
+
         <div id="alertaEstado" class="alert mt-3" role="alert" style="display: none;">
             <span id="alertaEstadoTexto"></span>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="fechaCreacion" class="form-label">Fecha de Creación</label>
             <input type="date" class="form-control" id="fechaCreacion" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="fechaEntrega" class="form-label">Fecha de Entrega Estimada</label>
             <input type="date" class="form-control" id="fechaEntrega" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
+            <label for="valorTotal" class="form-label">Valor Total</label>
+            <input type="number" class="form-control" id="valorTotal" step="0.01" required>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+            <button type="submit" class="btn btn-danger">Registrar Orden</button>
+        </div>
+
+        <div class="form-group mb-3">
             <label for="cantidad" class="form-label text-danger">Cantidad</label>
             <div class="input-group">
                 <input type="number" class="form-control" id="cantidad" required>
@@ -228,37 +249,29 @@
                 </button>
             </div>
         </div>
-
-        <div class="form-group">
-            <label for="valorTotal" class="form-label">Valor Total</label>
-            <input type="number" class="form-control" id="valorTotal" step="0.01" required>
-        </div>
-
-        <div class="d-flex justify-content-between">
-            <button type="submit" class="btn btn-danger">Registrar Orden</button>
-        </div>
     </form>
 
     <div class="mt-5">
-        <h3 class="text-danger">Órdenes Registradas</h3>
-        <input type="text" class="form-control mb-3" id="buscar" placeholder="Buscar por nombre del cliente o producto...">
-        <table class="table table-dark table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre del Cliente</th>
-                    <th>Descripción</th>
-                    <th>Encargado</th>
-                    <th>Estado</th>
-                    <th>Fecha de Creación</th>
-                    <th>Fecha de Entrega</th>
-                    <th>Cantidad</th>
-                    <th>Valor Total</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="listaOrdenes"></tbody>
-        </table>
-    </div>
+    <h3 class="text-danger">Órdenes Registradas</h3>
+    <input type="text" class="form-control mb-3" id="buscar" placeholder="Buscar por nombre del cliente, encargado, estado o prioridad...">
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Nombre del Cliente</th>
+                <th>Descripción</th>
+                <th>Encargado</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th>Fecha de Creación</th>
+                <th>Fecha de Entrega</th>
+                <th>Valor Total</th>
+                <th>Acciones</th> <!-- LAS ACCIONES SON EDITAR ELIMINAR Y VER -->
+            </tr>
+        </thead>
+        <tbody id="listaOrdenes"></tbody>
+    </table>
+</div>
+
 </div>
 
 <!-- Modal para agregar stock -->
@@ -302,9 +315,36 @@
 </div>
 
 
+<!-- Modal de Encargado -->
+<div class="modal fade" id="encargadoProduccionModal" tabindex="-1" aria-labelledby="encargadoProduccionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="encargadoProduccionModalLabel">Administrar Encargados de Producción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="nuevoEncargado" class="form-label">Nombre del Encargado:</label>
+                    <input type="text" class="form-control" id="nuevoEncargado" placeholder="Ingrese el nombre">
+                </div>
+                <div>
+                    <label class="form-label">Encargados Actuales:</label>
+                    <ul class="list-group" id="listaEncargados">
+                        <!-- Aquí se agregarán los encargados -->
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="agregarEncargado">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para ver historial del cliente -->
-<div class="modal fade" id="historialClienteModal" tabindex="-1" aria-labelledby="historialClienteModalLabel"
-     aria-hidden="true">
+<div class="modal fade" id="historialClienteModal" tabindex="-1" aria-labelledby="historialClienteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -312,14 +352,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Campo de búsqueda -->
                 <div class="mb-4">
                     <img src="img/Logo2.png" alt="Logo" class="img-logo">
-                    <input type="text" id="searchHistorial" class="form-control" placeholder="Buscar en historial"
-                           oninput="filtrarHistorial()">
+                    <input type="text" id="searchHistorial" class="form-control" placeholder="Buscar en historial" oninput="filtrarHistorial()">
                 </div>
 
-                <!-- Lista de historial -->
                 <h6 class="mt-4">Historial de Cliente</h6>
                 <ul id="listaHistorial" class="list-group">
                     <!-- El historial se llenará dinámicamente -->
@@ -332,28 +369,109 @@
     </div>
 </div>
 
-<!-- Modal para ver detalles del cliente -->
-<div class="modal fade" id="detalleClienteModal" tabindex="-1" aria-labelledby="detalleClienteModalLabel" aria-hidden="true">
+<!-- Modal para ver la orden -->
+<div class="modal fade" id="modalOrden" tabindex="-1" aria-labelledby="modalOrdenLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="detalleClienteModalLabel">Detalles del Cliente</h5>
+                <h5 class="modal-title" id="modalOrdenLabel">Detalles de la Orden</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-            <img src="img/Logo2.png" alt="Logo" class="img-logo">
-
-                <div id="detallesCliente">
-                    <!-- Aquí se mostrarán los detalles del cliente seleccionado -->
-                </div>
-                <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-success" onclick="abrirModalCompra()">Añadir compra</button>
-                </div>
+            <div class="modal-body" id="modalOrdenBody">
+                <!-- La información de la orden se insertará aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
+
+
+
+
+
+
+<script>
+    //ESTO ES LO DE LA CANTIDA Y EL STOCK, LAS FUNCIONES DEL RESTO DEL PROYETO VA A ARRIBA
+
+//ESTO ES LO DE LA CANTIDA Y EL STOCK, LAS FUNCIONES DEL RESTO DEL PROYETO VA A ARRIBA
+
+    // Cargar productos en el select del modal
+    function cargarProductos() {
+    let select = document.getElementById("nombreProductoStock");
+    select.innerHTML = "<option value='' disabled selected>Seleccione un producto</option>"; // Resetea opciones
+
+    productos.forEach(producto => {
+        let option = document.createElement("option");
+        option.value = producto.nombreProducto;
+        option.textContent = producto.nombreProducto;
+        select.appendChild(option);
+    });
+    }
+
+    // Actualizar cantidad actual cuando se selecciona un producto
+    function actualizarCantidadActual() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        document.getElementById("cantidadActual").value = producto.cantidadInicial;
+    } else {
+        document.getElementById("cantidadActual").value = "";
+    }
+    }
+
+    // Función para agregar stock
+    function agregarStock() {
+    let nombreProductoStock = document.getElementById("nombreProductoStock").value;
+    let cantidadAgregar = parseInt(document.getElementById("cantidadAgregar").value);
+    let cantidadActual = parseInt(document.getElementById("cantidadActual").value);
+
+    let producto = productos.find(p => p.nombreProducto === nombreProductoStock);
+    if (producto) {
+        if (cantidadAgregar > 0) {
+            producto.cantidadInicial -= cantidadAgregar;
+            if (producto.cantidadInicial < 0) producto.cantidadInicial = 0; // Evita que la cantidad sea negativa
+            producto.valorTotal = producto.cantidadInicial * producto.precioUnidad; // Actualizar el valor total
+            
+            // Actualizar el cuadro de cantidad en el formulario principal
+            let cantidadInput = document.getElementById("cantidad");
+            let cantidadActualFormulario = parseInt(cantidadInput.value) || 0;
+            cantidadInput.value = cantidadActualFormulario + cantidadAgregar;
+
+            document.getElementById("cantidadActual").value = producto.cantidadInicial; // Actualiza el cuadro de cantidad en el modal
+            guardarEnLocalStorage();
+            alert("Stock descontado correctamente.");
+            document.getElementById("agregarStockForm").reset();
+            document.getElementById("agregarStockModal").querySelector('[data-bs-dismiss="modal"]').click(); // Cerrar modal
+        } else {
+            alert("La cantidad a descontar debe ser mayor a cero.");
+        }
+    } else {
+        alert("Producto no encontrado.");
+    }
+    }
+
+    // Guardar en LocalStorage
+    function guardarEnLocalStorage() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+    }
+
+    // Cargar productos desde LocalStorage al cargar la página
+    function cargarDesdeLocalStorage() {
+    let productosGuardados = JSON.parse(localStorage.getItem("productos"));
+    if (productosGuardados) {
+        productos = productosGuardados;
+        cargarProductos();
+    }
+    }
+
+    // Inicializar
+    document.addEventListener("DOMContentLoaded", function () {
+    cargarDesdeLocalStorage();
+    });
+</script>
 
 <script src="JS/produccion.js"></script>
 

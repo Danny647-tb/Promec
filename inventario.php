@@ -132,22 +132,32 @@
             </div>
 
             <div class="form-group">
-                <label for="categoria" class="form-label">Categoría</label>
-                <select class="form-control" id="categoria">
-                    <option value="">Seleccione una categoría</option>
-                    <!-- Opciones de categoría se llenarán dinámicamente -->
-                </select>
-                <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#gestionarCategoriasModal">Agregar nueva categoría</a>
-            </div>
-
-            <div class="form-group">
-    <label for="proveedor" class="form-label">Proveedor</label>
-    <select class="form-control" id="proveedor">
-        <option value="">Seleccione un proveedor</option>
-        <!-- Las opciones se llenarán dinámicamente -->
-    </select>
-    <a href="proveedores.php" class="text-danger">Agregar nuevo proveedor</a>
+    <label for="categoria" class="form-label">Categoría</label>
+    <div class="input-group">
+        <select class="form-control" id="categoria">
+            <option value="">Seleccione una categoría</option>
+            <!-- Opciones de categoría se llenarán dinámicamente -->
+        </select>
+        <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#gestionarCategoriasModal">
+            <i class="bi bi-plus"></i> Agregar nueva categoría
+        </button>
+    </div>
 </div>
+
+
+<div class="form-group">
+    <label for="proveedor" class="form-label">Proveedor</label>
+    <div class="input-group">
+        <select class="form-control" id="proveedor">
+            <option value="">Seleccione un proveedor</option>
+            <!-- Las opciones se llenarán dinámicamente -->
+        </select>
+        <a href="proveedores.php" class="btn btn-outline-primary ms-2">
+            <i class="bi bi-plus"></i> Agregar nuevo proveedor
+        </a>
+    </div>
+</div>
+
 
             <div class="form-group">
                 <label for="cantidadInicial" class="form-label">Cantidad Inicial</label>

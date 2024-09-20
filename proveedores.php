@@ -146,13 +146,17 @@
             </div>
 
             <div class="form-group">
-                <label for="giroNegocio" class="form-label">Giro de Negocio</label>
-                <select class="form-control" id="giroNegocio">
-                    <option value="">Seleccione un giro de negocio</option>
-                    <!-- Las opciones se llenarán dinámicamente -->
-                </select>
-                <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#gestionarGiroModal">Agregar nuevo giro de negocio</a>
-            </div>
+    <label for="giroNegocio" class="form-label">Giro de Negocio</label>
+    <div class="input-group">
+        <select class="form-control" id="giroNegocio">
+            <option value="">Seleccione un giro de negocio</option>
+            <!-- Las opciones se llenarán dinámicamente -->
+        </select>
+        <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#gestionarGiroModal">
+            <i class="bi bi-plus"></i> Agregar nuevo giro de negocio
+        </button>
+    </div>
+</div>
 
             <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-danger">Registrar Proveedor</button>
@@ -206,184 +210,231 @@
         </div>
     </div>
 
+
+
+
+
+
+
     <script>
-        let proveedores = [];
-        let editIndex = -1;
+       // Función para mostrar notificaciones pequeñas en la esquina superior derecha
+function mostrarNotificacion(mensaje, tipo) {
+    const notificacion = document.createElement('div');
+    notificacion.className = `alert alert-${tipo} alert-dismissible fade show`;
+    notificacion.textContent = mensaje;
 
-        document.addEventListener("DOMContentLoaded", function () {
-            // Cargar proveedores y giros de negocio al cargar la página
-            proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
-            mostrarProveedores();
-            cargarGiros();
-            actualizarGirosSelect();
-        });
+    // Estilo para la notificación
+    notificacion.style.position = 'fixed';
+    notificacion.style.top = '20px';
+    notificacion.style.right = '20px';
+    notificacion.style.zIndex = '1050';
+    notificacion.style.minWidth = '200px'; // Tamaño mínimo más pequeño
+    notificacion.style.maxWidth = '300px'; // Limitar el tamaño máximo
 
-        document.getElementById("proveedorForm").addEventListener("submit", function (e) {
-            e.preventDefault();
+    // Botón para cerrar la notificación
+    const botonCerrar = document.createElement('button');
+    botonCerrar.className = 'btn-close';
+    botonCerrar.setAttribute('type', 'button');
+    botonCerrar.setAttribute('data-bs-dismiss', 'alert');
+    botonCerrar.setAttribute('aria-label', 'Close');
+    notificacion.appendChild(botonCerrar);
 
-            let nombreProveedor = document.getElementById("nombreProveedor").value;
-            let contacto = document.getElementById("contacto").value;
-            let telefono = document.getElementById("telefono").value;
-            let email = document.getElementById("email").value;
-            let direccion = document.getElementById("direccion").value;
-            let giroNegocio = document.getElementById("giroNegocio").value;
+    // Insertar la notificación en el cuerpo de la página
+    document.body.appendChild(notificacion);
 
-            if (editIndex === -1) {
-                agregarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio);
-            } else {
-                actualizarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio);
-            }
+    // Eliminar la notificación automáticamente después de 3 segundos
+    setTimeout(() => {
+        notificacion.remove();
+    }, 3000);
+}
 
-            resetForm();
-            guardarEnLocalStorage();
-            mostrarProveedores();
-        });
-
-        function agregarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio) {
-            let nuevoProveedor = { nombreProveedor, contacto, telefono, email, direccion, giroNegocio };
-            proveedores.push(nuevoProveedor);
-            mostrarProveedores();
-        }
-
-        function actualizarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio) {
-            proveedores[editIndex] = { nombreProveedor, contacto, telefono, email, direccion, giroNegocio };
-            editIndex = -1;
-            mostrarProveedores();
-        }
-
-        function mostrarProveedores() {
-            let lista = document.getElementById("listaProveedores");
-            lista.innerHTML = "";
-            proveedores.forEach((proveedor, index) => {
-                let nuevaFila = `
-                    <tr>
-                        <td>${proveedor.nombreProveedor}</td>
-                        <td>${proveedor.contacto}</td>
-                        <td>${proveedor.telefono}</td>
-                        <td>${proveedor.email}</td>
-                        <td>${proveedor.direccion}</td>
-                        <td>${proveedor.giroNegocio}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="editarProveedor(${index})">Editar</button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarProveedor(${index})">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-                lista.insertAdjacentHTML('beforeend', nuevaFila);
-            });
-        }
-
-        function editarProveedor(index) {
-            let proveedor = proveedores[index];
-            editIndex = index;
-
-            document.getElementById("nombreProveedor").value = proveedor.nombreProveedor;
-            document.getElementById("contacto").value = proveedor.contacto;
-            document.getElementById("telefono").value = proveedor.telefono;
-            document.getElementById("email").value = proveedor.email;
-            document.getElementById("direccion").value = proveedor.direccion;
-            document.getElementById("giroNegocio").value = proveedor.giroNegocio;
-        }
-
-        function eliminarProveedor(index) {
-            if (confirm("¿Está seguro de que desea eliminar este proveedor?")) {
-                proveedores.splice(index, 1);
-                mostrarProveedores();
-                guardarEnLocalStorage();
-            }
-        }
-
-        function resetForm() {
-            document.getElementById("proveedorForm").reset();
-            editIndex = -1;
-        }
-
-        function guardarEnLocalStorage() {
-            localStorage.setItem("proveedores", JSON.stringify(proveedores));
-        }
-
-        function cargarGiros() {
-            let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-            const listaGiros = document.getElementById("listaGiros");
-            listaGiros.innerHTML = '';
-            giros.forEach((giro, index) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                listItem.innerHTML = `
-                    ${giro} 
-                    <button class="btn btn-danger btn-sm ms-3" onclick="eliminarGiro('${giro}')">Eliminar</button>
-                `;
-                listaGiros.appendChild(listItem);
-            });
-            actualizarGirosSelect();
-        }
-
-        function actualizarGirosSelect() {
-            const giroNegocioSelect = document.getElementById("giroNegocio");
-            let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-            giroNegocioSelect.innerHTML = '<option value="">Seleccione un giro de negocio</option>';
-            giros.forEach(giro => {
-                let option = document.createElement('option');
-                option.value = giro;
-                option.textContent = giro;
-                giroNegocioSelect.appendChild(option);
-            });
-        }
-
-        document.getElementById("nuevoGiroForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-
-            let nuevoGiro = document.getElementById("nuevoGiro").value.trim();
-            if (!nuevoGiro) return;
-
-            let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-
-            if (!giros.includes(nuevoGiro)) {
-                giros.push(nuevoGiro);
-                localStorage.setItem("girosNegocio", JSON.stringify(giros));
-                cargarGiros();
-                document.getElementById("nuevoGiroForm").reset();
-                let modal = bootstrap.Modal.getInstance(document.getElementById('gestionarGiroModal'));
-                modal.hide();
-            } else {
-                alert("Este giro ya está registrado.");
-            }
-        });
-
-        function eliminarGiro(giroNombre) {
-            let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
-            giros = giros.filter(giro => giro !== giroNombre);
-            localStorage.setItem("girosNegocio", JSON.stringify(giros));
-            cargarGiros();
-        }
-
-    </script>
-
-<script>
-
-//MENU DE PROVEEDORES 
+let proveedores = [];
+let editIndex = -1;
 
 document.addEventListener("DOMContentLoaded", function () {
-cargarProveedoresEnMenu();
+    // Cargar proveedores y giros de negocio al cargar la página
+    proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+    mostrarProveedores();
+    cargarGiros();
+    actualizarGirosSelect();
+});
+
+document.getElementById("proveedorForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    let nombreProveedor = document.getElementById("nombreProveedor").value;
+    let contacto = document.getElementById("contacto").value;
+    let telefono = document.getElementById("telefono").value;
+    let email = document.getElementById("email").value;
+    let direccion = document.getElementById("direccion").value;
+    let giroNegocio = document.getElementById("giroNegocio").value;
+
+    if (editIndex === -1) {
+        agregarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio);
+    } else {
+        actualizarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio);
+    }
+
+    resetForm();
+    guardarEnLocalStorage();
+    mostrarProveedores();
+});
+
+function agregarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio) {
+    let nuevoProveedor = { nombreProveedor, contacto, telefono, email, direccion, giroNegocio };
+    proveedores.push(nuevoProveedor);
+    mostrarProveedores();
+
+    // Mostrar notificación de éxito
+    mostrarNotificacion('Proveedor agregado correctamente.', 'success');
+}
+
+function actualizarProveedor(nombreProveedor, contacto, telefono, email, direccion, giroNegocio) {
+    proveedores[editIndex] = { nombreProveedor, contacto, telefono, email, direccion, giroNegocio };
+    editIndex = -1;
+    mostrarProveedores();
+
+    // Mostrar notificación de éxito
+    mostrarNotificacion('Proveedor actualizado correctamente.', 'success');
+}
+
+function mostrarProveedores() {
+    let lista = document.getElementById("listaProveedores");
+    lista.innerHTML = "";
+    proveedores.forEach((proveedor, index) => {
+        let nuevaFila = `
+            <tr>
+                <td>${proveedor.nombreProveedor}</td>
+                <td>${proveedor.contacto}</td>
+                <td>${proveedor.telefono}</td>
+                <td>${proveedor.email}</td>
+                <td>${proveedor.direccion}</td>
+                <td>${proveedor.giroNegocio}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="editarProveedor(${index})">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarProveedor(${index})">Eliminar</button>
+                </td>
+            </tr>
+        `;
+        lista.insertAdjacentHTML('beforeend', nuevaFila);
+    });
+}
+
+function editarProveedor(index) {
+    let proveedor = proveedores[index];
+    editIndex = index;
+
+    document.getElementById("nombreProveedor").value = proveedor.nombreProveedor;
+    document.getElementById("contacto").value = proveedor.contacto;
+    document.getElementById("telefono").value = proveedor.telefono;
+    document.getElementById("email").value = proveedor.email;
+    document.getElementById("direccion").value = proveedor.direccion;
+    document.getElementById("giroNegocio").value = proveedor.giroNegocio;
+}
+
+function eliminarProveedor(index) {
+    if (confirm("¿Está seguro de que desea eliminar este proveedor?")) {
+        proveedores.splice(index, 1);
+        mostrarProveedores();
+        guardarEnLocalStorage();
+
+        // Mostrar notificación de éxito
+        mostrarNotificacion('Proveedor eliminado correctamente.', 'success');
+    }
+}
+
+function resetForm() {
+    document.getElementById("proveedorForm").reset();
+    editIndex = -1;
+}
+
+function guardarEnLocalStorage() {
+    localStorage.setItem("proveedores", JSON.stringify(proveedores));
+}
+
+function cargarGiros() {
+    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
+    const listaGiros = document.getElementById("listaGiros");
+    listaGiros.innerHTML = '';
+    giros.forEach((giro, index) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        listItem.innerHTML = `
+            ${giro} 
+            <button class="btn btn-danger btn-sm ms-3" onclick="eliminarGiro('${giro}')">Eliminar</button>
+        `;
+        listaGiros.appendChild(listItem);
+    });
+    actualizarGirosSelect();
+}
+
+function actualizarGirosSelect() {
+    const giroNegocioSelect = document.getElementById("giroNegocio");
+    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
+    giroNegocioSelect.innerHTML = '<option value="">Seleccione un giro de negocio</option>';
+    giros.forEach(giro => {
+        let option = document.createElement('option');
+        option.value = giro;
+        option.textContent = giro;
+        giroNegocioSelect.appendChild(option);
+    });
+}
+
+document.getElementById("nuevoGiroForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    let nuevoGiro = document.getElementById("nuevoGiro").value.trim();
+    if (!nuevoGiro) return;
+
+    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
+
+    if (!giros.includes(nuevoGiro)) {
+        giros.push(nuevoGiro);
+        localStorage.setItem("girosNegocio", JSON.stringify(giros));
+        cargarGiros();
+        document.getElementById("nuevoGiroForm").reset();
+        let modal = bootstrap.Modal.getInstance(document.getElementById('gestionarGiroModal'));
+        modal.hide();
+
+        // Mostrar notificación de éxito
+        mostrarNotificacion('Giro de negocio agregado correctamente.', 'success');
+    } else {
+        alert("Este giro ya está registrado.");
+    }
+});
+
+function eliminarGiro(giroNombre) {
+    let giros = JSON.parse(localStorage.getItem("girosNegocio")) || [];
+    giros = giros.filter(giro => giro !== giroNombre);
+    localStorage.setItem("girosNegocio", JSON.stringify(giros));
+    cargarGiros();
+
+    // Mostrar notificación de éxito
+    mostrarNotificacion('Giro de negocio eliminado correctamente.', 'success');
+}
+
+// MENU DE PROVEEDORES 
+document.addEventListener("DOMContentLoaded", function () {
+    cargarProveedoresEnMenu();
 });
 
 function cargarProveedoresEnMenu() {
-// Obtener el select del menú donde se agregarán los proveedores
-let proveedorSelect = document.getElementById("proveedor");
+    // Obtener el select del menú donde se agregarán los proveedores
+    let proveedorSelect = document.getElementById("proveedor");
 
-// Limpiar las opciones actuales (mantiene la opción predeterminada)
-proveedorSelect.innerHTML = '<option value="">Seleccione un proveedor</option>';
+    // Limpiar las opciones actuales (mantiene la opción predeterminada)
+    proveedorSelect.innerHTML = '<option value="">Seleccione un proveedor</option>';
 
-// Obtener los proveedores almacenados en el localStorage
-let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+    // Obtener los proveedores almacenados en el localStorage
+    let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
 
-// Agregar los proveedores como opciones en el select
-proveedores.forEach(proveedor => {
-let option = document.createElement("option");
-option.value = proveedor.nombreProveedor; // El valor será el nombre del proveedor
-option.textContent = proveedor.nombreProveedor; // El texto que se muestra será el nombre del proveedor
-proveedorSelect.appendChild(option);
-});
+    // Agregar los proveedores como opciones en el select
+    proveedores.forEach(proveedor => {
+        let option = document.createElement("option");
+        option.value = proveedor.nombreProveedor; // El valor será el nombre del proveedor
+        option.textContent = proveedor.nombreProveedor; // El texto que se muestra será el nombre del proveedor
+        proveedorSelect.appendChild(option);
+    });
 }
 
 </script>

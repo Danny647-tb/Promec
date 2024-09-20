@@ -73,9 +73,8 @@
                             </div>
                             <a href="">Forgot Password</a>
                         </div>
-                        <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Sign Up</button>
-                        <p class="text-center mb-0">Already have an Account? <a href="">Sign In</a></p>
-                    </div>
+                        <button type="submit" class="btn btn-primary py-3 w-100 mb-4" id="signUpButton">Sign Up</button>
+                        </div>
                 </div>
             </div>
         </div>
@@ -92,9 +91,35 @@
     <script src="lib/tempusdominus/js/moment.min.js"></script>
     <script src="lib/tempusdominus/js/moment-timezone.min.js"></script>
     <script src="lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+
+    <script>
+    document.getElementById('signUpButton').addEventListener('click', function(event) {
+        event.preventDefault();  // Evita que el formulario se envíe directamente
+        // Aquí puedes agregar la validación del formulario o hacer la petición AJAX si es necesario
+
+        // Mostrar la alerta de éxito
+        Swal.fire({
+            icon: 'success',
+            title: '¡Excelente!',
+            text: 'Ya estas registrado',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#6f42c1',
+            iconColor: '#32CD32',  // Verde claro para el icono de éxito
+            backdrop: true,
+            padding: '2rem',
+            customClass: {
+                popup: 'animated fadeInDown'
+            }
+        });
+    });
+
+</script>
+
+
 </body>
 
 </html>

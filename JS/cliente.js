@@ -649,3 +649,64 @@ document.addEventListener("DOMContentLoaded", function () {
             proveedorSelect.appendChild(option);
         });
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+    
+        const nombreCliente = form.nombreCliente.value.trim();
+        const descripcionProducto = form.descripcionProducto.value.trim();
+        const encargadoProduccion = form.encargadoProduccion.value.trim();
+        const estadoOrden = form.estadoOrden.value;
+        const fechaCreacion = form.fechaCreacion.value;
+        const fechaEntrega = form.fechaEntrega.value;
+        const cantidad = form.cantidad.value;
+        const valorTotal = form.valorTotal.value;
+    
+        // Verificar si hay campos vacíos
+        if (!nombreCliente || !descripcionProducto || !encargadoProduccion || !estadoOrden || !fechaCreacion || !fechaEntrega || !cantidad || !valorTotal) {
+            alert('Por favor, complete todos los campos.');
+            return;
+        }
+    
+        const order = {
+            nombreCliente,
+            descripcionProducto,
+            encargadoProduccion,
+            estadoOrden,
+            fechaCreacion,
+            fechaEntrega,
+            cantidad,
+            valorTotal,
+        };
+    
+        // Guardar la compra en el Local Storage
+        const compras = JSON.parse(localStorage.getItem('compras')) || [];
+        compras.push({ nombreCliente, descripcionProducto, precio: valorTotal }); // Guarda el precio total
+        localStorage.setItem('compras', JSON.stringify(compras));
+    
+        if (editIndex !== null) {
+            // Editar orden existente
+            updateOrder(editIndex, order);
+        } else {
+            // Añadir nueva orden
+            addOrder(order);
+        }
+    
+        form.reset();
+        editIndex = null;
+        saveOrders(); // Guardar órdenes en Local Storage
+    }
+    
